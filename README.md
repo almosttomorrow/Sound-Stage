@@ -85,6 +85,9 @@ That last layer is the one that matters most on headphones. A conventional
 stereo reverb still sounds like it is inside your skull; modelling the fact
 that your head is in the way puts the room *around* you.
 
+The output meter reads through the same K-weighting, so it shows perceived
+level rather than raw amplitude — a rig with a big low end does not just peg it.
+
 **A/B is loudness-matched.** Switching between the room and the raw file plays
 pink noise through an exact copy of the chain, measures both through the
 ITU-R BS.1770 K-weighting filter broadcast loudness meters use, and matches
@@ -95,23 +98,30 @@ than a flat energy sum would predict.
 
 ## The rooms
 
-Each room puts you in one chosen place. There is an obvious spot to be in every
-one of these — the sweet spot in a control room, the middle of the bowl in a
-stadium — so the app decides, rather than handing over a distance slider. How
-hard each system is driven is fixed the same way: a club rig is wide open, a
-pair of studio monitors is not.
+**Every room is the best version of itself.** Not an average stadium with a
+rung-out PA, but a properly flown array that a system engineer has actually
+tuned, in a room with the treatment a good example of it would have. Voicings
+are smooth house curves rather than caricatures, drive levels are what a
+well-run rig actually does, pattern control is what a well-specified system
+buys you, and the distant rigs get the high end shelved back up to replace what
+the air takes out — capped at 6 dB, because a real rig runs out of headroom too.
+What stays honest is the physics: the size, the distance, the decay.
+
+Each room also puts you in one chosen place. There is an obvious spot to be in
+every one of these — the sweet spot in a control room, the middle of the bowl in
+a stadium — so the app decides, rather than handing over a distance slider.
 
 | Room | Size | Where you are | Decay (500 Hz–1 kHz) | System |
 |---|---|---|---|---|
-| Control Room | 6.5 × 4.8 × 3.0 m | Sweet spot, 1.6 m back | 0.13 s | Nearfield monitors |
-| Living Room | 7.5 × 5.0 × 2.7 m | On the sofa, 3.2 m back | 0.38 s | Hi-fi bookshelf pair |
-| Jazz Club | 12 × 9 × 3.2 m | Two tables back, 4.5 m | 0.32 s | Small club PA |
+| Control Room | 6.5 × 4.8 × 3.0 m | Sweet spot, 1.6 m back | 0.13 s | Tuned nearfields |
+| Living Room | 7.5 × 5.0 × 2.7 m | On the sofa, 3.2 m back | 0.34 s | Well-placed hi-fi pair |
+| Jazz Club | 12 × 9 × 3.2 m | Two tables back, 4.5 m | 0.32 s | Tuned club PA with subs |
 | Concert Hall | 45 × 22 × 17 m | Mid-stalls, 18 m | 2.2 s | Discreet reinforcement |
-| Stone Church | 30 × 14 × 15 m | Halfway down the nave, 12 m | 4.6 s | Column array |
-| Nightclub | 24 × 16 × 5.5 m | On the floor, 9 m from the stacks | 0.94 s | Stacked rig, horn subs |
-| Stadium | 190 × 140 m, open | Middle of the bowl, 67 m | 1.3 s | Flown line array |
-| Open Air Field | no walls | In the crowd, 74 m | 0.49 s | Line array |
-| Car | 2.4 × 1.6 × 1.15 m | Driver's seat, nothing centred | 0.08 s | Factory door speakers |
+| Stone Church | 30 × 14 × 15 m | Halfway down the nave, 12 m | 4.6 s | Steerable column array |
+| Nightclub | 24 × 16 × 5.5 m | On the floor, 9 m from the stacks | 0.67 s | Tuned club rig, horn subs |
+| Stadium | 190 × 140 m, open | Middle of the bowl, 67 m | 1.3 s | Flown array + 6 dB air compensation |
+| Open Air Field | no walls | In the crowd, 74 m | 0.49 s | Flown array + 6 dB air compensation |
+| Car | 2.4 × 1.6 × 1.15 m | Driver's seat, nothing centred | 0.08 s | Properly tuned car system |
 
 Responses are built on the device when you pick a room — 40 ms to 700 ms
 depending on how long its decay is.
@@ -157,3 +167,5 @@ self-contained file with no dependencies.
   time.
 - One position and one drive level per room. That is the point — but it means
   you cannot walk to the back of the church to hear what changes.
+- Every venue is its best case by design, so none of these will tell you what a
+  badly tuned system sounds like. That was not what it is for.

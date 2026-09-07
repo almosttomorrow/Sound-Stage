@@ -19,7 +19,7 @@
 
 import { renderSpeakerBRIR } from './brir.js';
 import { SYSTEMS } from './venues.js';
-import { clamp, dbToGain } from './acoustics.js';
+import { clamp, dbToGain, AIR_ABSORPTION_DB_M } from './acoustics.js';
 
 const RAMP = 0.02;
 
@@ -43,21 +43,33 @@ function driveCurve(amount) {
  * the calibration render — they have to be the same circuit or the level
  * matching would be measuring something the listener never hears.
  */
-function makeVoicing(ctx, sys) {
+function makeVoicing(ctx, sys, airCompDb = 0) {
   const hp = ctx.createBiquadFilter();
   hp.type = 'highpass';
   hp.frequency.value = sys.hp[0];
   hp.Q.value = sys.hp[1];
 
   let node = hp;
-  for (const [f, q, g] of sys.bands) {
+  for (const [f, q, g, type] of sys.bands) {
     const pk = ctx.createBiquadFilter();
-    pk.type = 'peaking';
+    pk.type = type || 'peaking';
     pk.frequency.value = f;
     pk.Q.value = q;
     pk.gain.value = g;
     node.connect(pk);
     node = pk;
+  }
+
+  // Long-throw high-frequency compensation. A system engineer working a
+  // stadium shelves the top end back up to replace what the walk through the
+  // air will take out; without it a distant rig is just dull.
+  if (airCompDb > 0.2) {
+    const air = ctx.createBiquadFilter();
+    air.type = 'highshelf';
+    air.frequency.value = 5000;
+    air.gain.value = airCompDb;
+    node.connect(air);
+    node = air;
   }
 
   const lp = ctx.createBiquadFilter();
@@ -157,6 +169,7 @@ export class SoundStage {
     this.stream = null;      // MediaStream when capturing
     this.venue = null;
     this.sys = null;
+    this.airCompDb = 0;
     this.render = null;      // last render report, for the UI
   }
 
@@ -227,8 +240,11 @@ export class SoundStage {
     this.wetGain.connect(this.master);
     this.dryGain.connect(this.master);
     this.master.connect(this.limiter);
-    this.limiter.connect(this.analyser);
-    this.analyser.connect(this.ctx.destination);
+    this.limiter.connect(this.ctx.destination);
+    // The meter reads perceived level, not raw amplitude: it sees the output
+    // through the same K-weighting the level matching uses, so a rig with a big
+    // low end does not just peg the meter.
+    attachLoudnessMeter(ctx, this.limiter).connect(this.analyser);
 
     this.ready = true;
   }
@@ -310,6 +326,11 @@ export class SoundStage {
     this.venue = venue;
     this.sys = SYSTEMS[venue.system];
     this.render = report;
+    // Capped: you can put six decibels back, not the thirteen the air took,
+    // and a real rig would run out of headroom long before that too.
+    this.airCompDb = venue.airComp
+      ? Math.min(6, AIR_ABSORPTION_DB_M[6] * report.distance * 0.75)
+      : 0;
     this.rebuildVoicing();
     await this.calibrate();
     return report;
@@ -319,7 +340,7 @@ export class SoundStage {
     if (!this.sys) return;
     if (this.voicing) { try { this.voicing.input.disconnect(); this.voicing.output.disconnect(); } catch (_) {} }
     try { this.voicingIn.disconnect(); } catch (_) {}
-    this.voicing = makeVoicing(this.ctx, this.sys);
+    this.voicing = makeVoicing(this.ctx, this.sys, this.airCompDb);
     this.voicingIn.connect(this.voicing.input);
     this.voicing.output.connect(this.stereoise);
   }
@@ -355,7 +376,7 @@ export class SoundStage {
 
       let tail = src;
       if (treated) {
-        const v = makeVoicing(ctx, this.sys);
+        const v = makeVoicing(ctx, this.sys, this.airCompDb);
         src.connect(v.input);
         const st = ctx.createGain();
         st.channelCount = 2;
