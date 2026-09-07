@@ -9,16 +9,14 @@
 
 import { VENUES, venueById } from './venues.js';
 import { SoundStage, renderVenue } from './engine.js';
-import { reverbTimes, BAND_CENTRES, lerpVec, clamp } from './acoustics.js';
+import { reverbTimes, BAND_CENTRES, clamp } from './acoustics.js';
 
 const $ = (id) => document.getElementById(id);
 
 const stage = new SoundStage();
 const state = {
   venue: venueById('living'),
-  seat: 0.35,
   quality: 1,
-  drive: 1,
   volume: 0.85,
   bypass: false,
   report: null,
@@ -76,7 +74,7 @@ async function refreshRoom() {
   const sampleRate = stage.ctx ? stage.ctx.sampleRate : 48000;
 
   try {
-    const opts = { seat: state.seat, quality: state.quality };
+    const opts = { quality: state.quality };
     let report;
     if (stage.ready) {
       report = await stage.loadVenue(state.venue, opts);
@@ -105,7 +103,6 @@ function selectVenue(id) {
     el.setAttribute('aria-pressed', String(el.dataset.id === id));
   }
   paintVenueText();
-  updateSeatLabel();
   scheduleRefresh(0);
 }
 
@@ -114,6 +111,7 @@ function paintVenueText() {
   $('room-name').textContent = v.name;
   $('room-place').textContent = v.place;
   $('room-note').textContent = v.note;
+  $('room-spot').textContent = v.spot;
 }
 
 /* ------------------------------------------------------------- room paint */
@@ -251,36 +249,6 @@ function drawDecay(report) {
 
 /* -------------------------------------------------------------- controls */
 
-function seatDistance() {
-  const v = state.venue;
-  const l = lerpVec(v.seat.near, v.seat.far, state.seat);
-  const s = v.speakers[0];
-  return Math.hypot(l[0] - s[0], l[1] - s[1], l[2] - s[2]);
-}
-
-function updateSeatLabel() {
-  const d = seatDistance();
-  $('seat-val').textContent = `${d < 10 ? d.toFixed(1) : Math.round(d)} m out`;
-}
-
-$('seat').addEventListener('input', (e) => {
-  state.seat = Number(e.target.value) / 100;
-  updateSeatLabel();
-  scheduleRefresh(220);
-});
-
-let calibrateTimer;
-$('drive').addEventListener('input', (e) => {
-  state.drive = Number(e.target.value) / 100;
-  $('drive-val').textContent = `${e.target.value} %`;
-  if (!stage.ready) return;
-  stage.setDrive(state.drive);
-  // Driving the system harder changes its loudness, so re-match the bypass
-  // level once the slider settles.
-  clearTimeout(calibrateTimer);
-  calibrateTimer = setTimeout(() => stage.calibrate(), 300);
-});
-
 $('vol').addEventListener('input', (e) => {
   state.volume = Number(e.target.value) / 100;
   $('vol-val').textContent = `${e.target.value} %`;
@@ -325,7 +293,6 @@ async function afterSourceReady(kind, name) {
   $('now-kind').textContent = kind;
   $('now-name').textContent = name;
   $('transport').style.display = stage.mediaEl ? '' : 'none';
-  stage.setDrive(state.drive);
   stage.setVolume(state.volume);
   stage.setBypass(state.bypass);
   await refreshRoom();
@@ -437,7 +404,6 @@ function boot() {
   buildVenueTiles();
   buildBandAxis();
   paintVenueText();
-  updateSeatLabel();
   $('transport').style.display = 'none';
   refreshRoom();
 

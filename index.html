@@ -61,6 +61,7 @@
       <h2 id="room-name">Living Room</h2>
       <span class="place mono" id="room-place">Carpeted lounge, 7.5 × 5.0 m</span>
       <p class="note" id="room-note">Two good bookshelf speakers, a sofa behind you, a window down one side.</p>
+      <p class="spot"><span class="spot-label mono">You are</span><span id="room-spot">On the sofa, 3.2 m back</span></p>
     </div>
 
     <div class="plot" id="plot">
@@ -87,30 +88,12 @@
   </section>
 
   <section id="controls-section">
-    <div class="sec-head"><span class="step mono">03</span><p class="eyebrow">Your seat &amp; the system</p></div>
+    <div class="sec-head"><span class="step mono">03</span><p class="eyebrow">Output</p></div>
     <div class="controls">
-      <div class="ctl">
-        <div class="ctl-top"><label for="seat">Where you are standing</label><span class="val mono" id="seat-val">2.6 m out</span></div>
-        <input type="range" id="seat" min="0" max="100" value="35">
-        <div class="ctl-ends"><span>Close to the speakers</span><span>Back of the room</span></div>
-      </div>
-      <div class="ctl">
-        <div class="ctl-top"><label for="drive">How hard the system is pushed</label><span class="val mono" id="drive-val">100 %</span></div>
-        <input type="range" id="drive" min="0" max="160" value="100">
-        <div class="ctl-ends"><span>Clean</span><span>Wide open</span></div>
-      </div>
       <div class="ctl">
         <div class="ctl-top"><label for="vol">Volume</label><span class="val mono" id="vol-val">85 %</span></div>
         <input type="range" id="vol" min="0" max="120" value="85">
         <div class="ctl-ends"><span>Quiet</span><span>Loud</span></div>
-      </div>
-      <div class="ctl">
-        <div class="ctl-top"><label id="q-label">Response length</label></div>
-        <div class="seg" role="group" aria-labelledby="q-label" id="quality">
-          <button type="button" data-q="0.55" aria-pressed="false">Light</button>
-          <button type="button" data-q="1" aria-pressed="true">Full</button>
-        </div>
-        <p class="ctl-note" id="q-note">Full length uses the whole measured decay. Light halves it, which builds a room about twice as fast on a slower phone.</p>
       </div>
     </div>
 
@@ -127,6 +110,17 @@
         On iOS there is no system-audio capture at all, and the streaming services encrypt their playback on every
         platform. So this app has to be the player. Files work everywhere; on a desktop browser you can also share a
         tab and process whatever it is playing, as long as that tab is not using DRM.</p>
+      <p><strong>Where you stand is part of the room.</strong> There is an obvious place to be in each of these
+        rooms — the sweet spot in a control room, the middle of the bowl in a stadium — so the app puts you there
+        rather than asking. How hard each system is driven is set the same way: a club rig is wide open, a pair of
+        studio monitors is not.</p>
+      <p><strong>If it stutters.</strong>
+        <span class="seg" role="group" aria-label="Response length" id="quality">
+          <button type="button" data-q="0.55" aria-pressed="false">Light</button>
+          <button type="button" data-q="1" aria-pressed="true">Full</button>
+        </span>
+        Full length uses the whole measured decay. Light halves it, which builds a room about twice as fast on a
+        slower phone.</p>
       <p><strong>Headphones, please.</strong> The whole point is that you supply the ears. Played on speakers you
         would be listening to a room inside a room.</p>
     </details>

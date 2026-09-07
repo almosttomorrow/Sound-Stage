@@ -19,7 +19,7 @@
 
 import { renderSpeakerBRIR } from './brir.js';
 import { SYSTEMS } from './venues.js';
-import { lerpVec, clamp, dbToGain } from './acoustics.js';
+import { clamp, dbToGain } from './acoustics.js';
 
 const RAMP = 0.02;
 
@@ -43,7 +43,7 @@ function driveCurve(amount) {
  * the calibration render — they have to be the same circuit or the level
  * matching would be measuring something the listener never hears.
  */
-function makeVoicing(ctx, sys, drive) {
+function makeVoicing(ctx, sys) {
   const hp = ctx.createBiquadFilter();
   hp.type = 'highpass';
   hp.frequency.value = sys.hp[0];
@@ -68,7 +68,7 @@ function makeVoicing(ctx, sys, drive) {
 
   const shaper = ctx.createWaveShaper();
   shaper.oversample = '4x';
-  shaper.curve = driveCurve((sys.drive ?? 0) * drive);
+  shaper.curve = driveCurve(sys.drive ?? 0);
   lp.connect(shaper);
 
   return { input: hp, output: shaper, shaper };
@@ -157,7 +157,6 @@ export class SoundStage {
     this.stream = null;      // MediaStream when capturing
     this.venue = null;
     this.sys = null;
-    this.drive = 1;
     this.render = null;      // last render report, for the UI
   }
 
@@ -320,7 +319,7 @@ export class SoundStage {
     if (!this.sys) return;
     if (this.voicing) { try { this.voicing.input.disconnect(); this.voicing.output.disconnect(); } catch (_) {} }
     try { this.voicingIn.disconnect(); } catch (_) {}
-    this.voicing = makeVoicing(this.ctx, this.sys, this.drive);
+    this.voicing = makeVoicing(this.ctx, this.sys);
     this.voicingIn.connect(this.voicing.input);
     this.voicing.output.connect(this.stereoise);
   }
@@ -356,7 +355,7 @@ export class SoundStage {
 
       let tail = src;
       if (treated) {
-        const v = makeVoicing(ctx, this.sys, this.drive);
+        const v = makeVoicing(ctx, this.sys);
         src.connect(v.input);
         const st = ctx.createGain();
         st.channelCount = 2;
@@ -390,13 +389,6 @@ export class SoundStage {
 
   /* -------------------------------------------------------------- controls */
 
-  /** How hard the system is being pushed. 0 = clean, 1 = the venue's own level. */
-  setDrive(amount) {
-    this.drive = clamp(amount, 0, 1.6);
-    if (!this.voicing) return;
-    this.voicing.shaper.curve = driveCurve((this.sys?.drive ?? 0) * this.drive);
-  }
-
   setBypass(on) {
     this.bypassed = on;
     if (!this.ctx) return;
@@ -429,11 +421,11 @@ const cache = new Map();
  * context, so the app can show a room's measurements before a note is played —
  * and before iOS will let it open an output at all.
  */
-export async function renderVenue(venue, { seat = 0.35, quality = 1, sampleRate = 48000 } = {}) {
-  const key = `${venue.id}|${seat.toFixed(3)}|${quality}|${sampleRate}`;
+export async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {}) {
+  const key = `${venue.id}|${quality}|${sampleRate}`;
   if (cache.has(key)) return cache.get(key);
 
-  const listener = lerpVec(venue.seat.near, venue.seat.far, clamp(seat, 0, 1));
+  const listener = venue.listener;
   const irSeconds = Math.max(0.25, venue.irSeconds * quality);
   const started = now();
 
@@ -464,7 +456,6 @@ export async function renderVenue(venue, { seat = 0.35, quality = 1, sampleRate 
     buffers,
     report: {
       venue: venue.id,
-      seat,
       rt60: reports[0].rt60,
       tMix: reports[0].tMix,
       t0: reports[0].t0,

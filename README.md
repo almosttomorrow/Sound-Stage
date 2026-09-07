@@ -95,21 +95,26 @@ than a flat energy sum would predict.
 
 ## The rooms
 
-| Room | Size | Decay (500 Hz–1 kHz) | System |
-|---|---|---|---|
-| Control Room | 6.5 × 4.8 × 3.0 m | 0.13 s | Nearfield monitors |
-| Living Room | 7.5 × 5.0 × 2.7 m | 0.38 s | Hi-fi bookshelf pair |
-| Jazz Club | 12 × 9 × 3.2 m | 0.32 s | Small club PA |
-| Concert Hall | 45 × 22 × 17 m | 2.2 s | Discreet reinforcement |
-| Stone Church | 30 × 14 × 15 m | 4.6 s | Column array |
-| Nightclub | 24 × 16 × 5.5 m | 0.94 s | Stacked rig, horn subs |
-| Stadium | 190 × 140 m, open | 1.3 s | Flown line array, 95 m away |
-| Open Air Field | no walls | 0.49 s | Line array, 104 m away |
-| Car | 2.4 × 1.6 × 1.15 m | 0.08 s | Factory door speakers |
+Each room puts you in one chosen place. There is an obvious spot to be in every
+one of these — the sweet spot in a control room, the middle of the bowl in a
+stadium — so the app decides, rather than handing over a distance slider. How
+hard each system is driven is fixed the same way: a club rig is wide open, a
+pair of studio monitors is not.
 
-The seat slider moves you through the room, which changes the balance between
-direct sound and reverberation the way walking backwards does. Each move
-rebuilds the response — 60 ms to 600 ms depending on the room.
+| Room | Size | Where you are | Decay (500 Hz–1 kHz) | System |
+|---|---|---|---|---|
+| Control Room | 6.5 × 4.8 × 3.0 m | Sweet spot, 1.6 m back | 0.13 s | Nearfield monitors |
+| Living Room | 7.5 × 5.0 × 2.7 m | On the sofa, 3.2 m back | 0.38 s | Hi-fi bookshelf pair |
+| Jazz Club | 12 × 9 × 3.2 m | Two tables back, 4.5 m | 0.32 s | Small club PA |
+| Concert Hall | 45 × 22 × 17 m | Mid-stalls, 18 m | 2.2 s | Discreet reinforcement |
+| Stone Church | 30 × 14 × 15 m | Halfway down the nave, 12 m | 4.6 s | Column array |
+| Nightclub | 24 × 16 × 5.5 m | On the floor, 9 m from the stacks | 0.94 s | Stacked rig, horn subs |
+| Stadium | 190 × 140 m, open | Middle of the bowl, 67 m | 1.3 s | Flown line array |
+| Open Air Field | no walls | In the crowd, 74 m | 0.49 s | Line array |
+| Car | 2.4 × 1.6 × 1.15 m | Driver's seat, nothing centred | 0.08 s | Factory door speakers |
+
+Responses are built on the device when you pick a room — 40 ms to 700 ms
+depending on how long its decay is.
 
 ## Running it
 
@@ -147,6 +152,8 @@ self-contained file with no dependencies.
   dataset would be the obvious next step.
 - No head tracking, so the room turns when you do. Head tracking is what would
   make the illusion hold completely.
-- Rooms are rebuilt when the seat moves, which is a visible pause on a slow
-  phone. The *Light* setting halves the response length and roughly halves the
-  build time.
+- Picking a room rebuilds its response, which is a brief pause on a slow phone.
+  The *Light* setting halves the response length and roughly halves the build
+  time.
+- One position and one drive level per room. That is the point — but it means
+  you cannot walk to the back of the church to hear what changes.

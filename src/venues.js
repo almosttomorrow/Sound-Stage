@@ -10,6 +10,11 @@
  * Coordinates: x runs from the back of the room towards the stage, y across it,
  * z upwards, with the corner of the room at the origin. The listener faces +x,
  * so their left ear points towards +y.
+ *
+ * Each room states one listening position rather than offering a slider. There
+ * is an obvious place to stand in every one of these rooms — the sweet spot in
+ * a control room, the middle of the bowl in a stadium — and choosing it is the
+ * app's job, not the listener's.
  */
 
 /**
@@ -54,7 +59,7 @@ export const SYSTEMS = {
     name: 'Stacked club rig, horn-loaded subs',
     hp: [28, 0.7], lp: [16500, 0.7],
     bands: [[48, 1.1, 5.0], [95, 1.3, 2.4], [380, 1.1, -3.0], [2800, 1.0, 2.0]],
-    drive: 0.24,
+    drive: 0.30,
   },
   lineArray: {
     name: 'Flown line array + ground subs',
@@ -66,7 +71,7 @@ export const SYSTEMS = {
     name: 'Factory door speakers',
     hp: [74, 1.1], lp: [13000, 0.7],
     bands: [[120, 1.4, 2.6], [340, 1.2, -4.0], [4200, 1.1, 2.8]],
-    drive: 0.09,
+    drive: 0.11,
   },
 };
 
@@ -79,9 +84,10 @@ export const VENUES = [
     system: 'monitors',
     dims: [6.5, 4.8, 3.0],
     materials: { xMin: 'acoustic', xMax: 'acoustic', yMin: 'acoustic', yMax: 'gypsum', floor: 'woodFloor', ceiling: 'acoustic' },
-    seat: { near: [3.1, 2.4, 1.2], far: [1.4, 2.4, 1.2] },
+    listener: [3.0, 2.4, 1.2],
+    spot: 'In the sweet spot, 1.6 m back',
     speakers: [[4.5, 3.05, 1.25], [4.5, 1.75, 1.25]],
-    spread: 1.0, irSeconds: 1.2, trimDb: 0,
+    spread: 1.0, irSeconds: 0.6, trimDb: 0,
   },
   {
     id: 'living',
@@ -91,9 +97,10 @@ export const VENUES = [
     system: 'bookshelf',
     dims: [7.5, 5.0, 2.7],
     materials: { xMin: 'softFurn', xMax: 'gypsum', yMin: 'glass', yMax: 'gypsum', floor: 'carpet', ceiling: 'gypsum' },
-    seat: { near: [3.6, 2.5, 1.15], far: [1.3, 2.5, 1.15] },
+    listener: [2.9, 2.5, 1.15],
+    spot: 'On the sofa, 3.2 m back',
     speakers: [[5.9, 3.7, 1.05], [5.9, 1.3, 1.05]],
-    spread: 1.0, irSeconds: 1.6, trimDb: 0,
+    spread: 1.0, irSeconds: 0.9, trimDb: 0,
   },
   {
     id: 'jazz',
@@ -103,9 +110,10 @@ export const VENUES = [
     system: 'clubPA',
     dims: [12, 9, 3.2],
     materials: { xMin: 'audience', xMax: 'brick', yMin: 'brick', yMax: 'woodPanel', floor: 'woodFloor', ceiling: 'acoustic' },
-    seat: { near: [7.0, 4.6, 1.15], far: [3.2, 3.4, 1.15] },
+    listener: [6.2, 4.5, 1.15],
+    spot: 'Two tables back, 4.5 m from the stack',
     speakers: [[10.2, 6.3, 2.05], [10.2, 2.7, 2.05]],
-    spread: 1.15, irSeconds: 2.0, trimDb: 0,
+    spread: 1.15, irSeconds: 1.0, trimDb: 0,
   },
   {
     id: 'hall',
@@ -115,9 +123,10 @@ export const VENUES = [
     system: 'hallRig',
     dims: [45, 22, 17],
     materials: { xMin: 'woodPanel', xMax: 'woodPanel', yMin: 'woodPanel', yMax: 'plaster', floor: 'audience', ceiling: 'plaster' },
-    seat: { near: [33, 11, 1.35], far: [11, 11, 1.35] },
+    listener: [23, 11, 1.35],
+    spot: 'Mid-stalls, 18 m from the stage',
     speakers: [[41, 14.6, 3.2], [41, 7.4, 3.2]],
-    spread: 1.0, irSeconds: 3.6, trimDb: 0,
+    spread: 1.0, irSeconds: 3.7, trimDb: 0,
   },
   {
     id: 'church',
@@ -127,9 +136,10 @@ export const VENUES = [
     system: 'columnPA',
     dims: [30, 14, 15],
     materials: { xMin: 'woodPanel', xMax: 'stone', yMin: 'glass', yMax: 'plaster', floor: 'naveFloor', ceiling: 'plaster' },
-    seat: { near: [21, 7.2, 1.3], far: [5.5, 6.4, 1.3] },
+    listener: [15, 7, 1.3],
+    spot: 'Halfway down the nave, 12 m back',
     speakers: [[26.5, 9.6, 4.2], [26.5, 4.4, 4.2]],
-    spread: 1.25, irSeconds: 5.2, trimDb: 0,
+    spread: 1.25, irSeconds: 5.0, trimDb: 0,
   },
   {
     id: 'club',
@@ -139,9 +149,12 @@ export const VENUES = [
     system: 'soundSystem',
     dims: [24, 16, 5.5],
     materials: { xMin: 'audience', xMax: 'concrete', yMin: 'concrete', yMax: 'brick', floor: 'clubFloor', ceiling: 'steelDeck' },
-    seat: { near: [17.5, 8.4, 1.6], far: [5.5, 8.4, 1.6] },
+    listener: [13, 8, 1.6],
+    spot: 'Out on the floor, 9 m from the stacks',
     speakers: [[21.5, 11.6, 2.6], [21.5, 4.4, 2.6]],
-    spread: 1.3, irSeconds: 2.6, trimDb: 0,
+    // Driven this hard the rig reads louder than a K-weighted match predicts:
+    // heavy soft clipping raises density as much as level. Trimmed by ear.
+    spread: 1.3, irSeconds: 2.5, trimDb: -2,
   },
   {
     id: 'stadium',
@@ -151,9 +164,10 @@ export const VENUES = [
     system: 'lineArray',
     dims: [190, 140, 38],
     materials: { xMin: 'audience', xMax: 'audience', yMin: 'audience', yMax: 'audience', floor: 'grass', ceiling: 'openSky' },
-    seat: { near: [82, 70, 6], far: [22, 70, 24] },
+    listener: [95, 70, 2],
+    spot: 'Middle of the bowl, 67 m from the arrays',
     speakers: [[150, 100, 27], [150, 40, 27]],
-    spread: 1.7, irSeconds: 3.6, trimDb: 0,
+    spread: 1.7, irSeconds: 3.0, trimDb: 0,
   },
   {
     id: 'field',
@@ -163,9 +177,10 @@ export const VENUES = [
     system: 'lineArray',
     dims: [300, 300, 120],
     materials: { xMin: 'openSky', xMax: 'openSky', yMin: 'openSky', yMax: 'openSky', floor: 'grass', ceiling: 'openSky' },
-    seat: { near: [175, 150, 1.65], far: [45, 150, 1.65] },
+    listener: [160, 150, 1.65],
+    spot: 'In the crowd, 74 m from the stage',
     speakers: [[232, 166, 8.5], [232, 134, 8.5]],
-    spread: 1.7, irSeconds: 1.9, trimDb: 0,
+    spread: 1.7, irSeconds: 1.3, trimDb: 0,
     // No walls means no reverberant field. What little decay there is comes off
     // the crowd and the distant site structures, so it is stated rather than
     // derived — Eyring has nothing to work with out here.
@@ -181,9 +196,10 @@ export const VENUES = [
     system: 'carDoors',
     dims: [2.4, 1.6, 1.15],
     materials: { xMin: 'carTrim', xMax: 'glass', yMin: 'glass', yMax: 'glass', floor: 'carpet', ceiling: 'carTrim' },
-    seat: { near: [0.95, 0.48, 0.82], far: [0.62, 0.48, 0.82] },
+    listener: [0.85, 0.48, 0.82],
+    spot: "Driver's seat — nothing is centred",
     speakers: [[1.62, 1.46, 0.32], [1.62, 0.14, 0.32]],
-    spread: 1.1, irSeconds: 0.6, trimDb: 0,
+    spread: 1.1, irSeconds: 0.3, trimDb: 0,
   },
 ];
 
