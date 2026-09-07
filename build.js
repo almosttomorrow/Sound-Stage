@@ -20,7 +20,10 @@ const flatten = (src) => src
   .replace(/^export\s*\{[\s\S]*?\}\s*;?[ \t]*$/gm, '')
   .replace(/^export\s+(default\s+)?(async\s+function|function|const|let|var|class)\b/gm, '$2');
 
-const bundle = ORDER.map((f) => `/* ===== ${f} ===== */\n${flatten(read(f))}`).join('\n');
+const bundle = ORDER.map((f) => `/* ===== ${f} ===== */\n${flatten(read(f))}`)
+  .join('\n')
+  // The single file is served on its own, with no service worker beside it.
+  .replace(/\n\s*if \('serviceWorker' in navigator[\s\S]*?\n  \}\n/, '\n');
 const css = read('src/style.css');
 const html = read('index.html');
 

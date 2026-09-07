@@ -2240,10 +2240,6 @@ function boot() {
   });
   window.matchMedia('(prefers-color-scheme: dark)')
     .addEventListener('change', () => drawDecay(state.report));
-
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  }
 }
 
 document.fonts?.ready.then(() => drawDecay(state.report)).catch(() => {});
