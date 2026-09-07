@@ -1,0 +1,2256 @@
+<title>Sound Stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Sound Stage — an acoustics instrument, not a media player.
+   Two accents carry meaning throughout: teal is direct sound, ember is
+   reverberant energy. They are used on the reflectogram, the band chart and
+   the A/B control, and nowhere decoratively. */
+
+:root {
+  --ground: #ebeeee;
+  --panel: #ffffff;
+  --raised: #f3f6f6;
+  --line: #d3dadc;
+  --line-soft: #e3e8e9;
+  --ink: #0e1518;
+  --ink-2: #35464d;
+  --muted: #5b6a71;
+  --direct: #0f7d90;
+  --direct-dim: #b9dde3;
+  --tail: #bb4d21;
+  --tail-dim: #f0d3c6;
+  --warn: #9a6a05;
+  --shadow: 0 1px 2px rgba(14, 21, 24, .06), 0 6px 20px rgba(14, 21, 24, .05);
+  --r: 3px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0b0f12;
+    --panel: #131a1e;
+    --raised: #1b2329;
+    --line: #28333a;
+    --line-soft: #1e272d;
+    --ink: #e9eff1;
+    --ink-2: #b6c5cb;
+    --muted: #8ba0a8;
+    --direct: #4fc8d9;
+    --direct-dim: #1d454e;
+    --tail: #e4703a;
+    --tail-dim: #4a2718;
+    --warn: #e0b355;
+    --shadow: 0 1px 0 rgba(255, 255, 255, .02), 0 10px 30px rgba(0, 0, 0, .35);
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0b0f12;
+  --panel: #131a1e;
+  --raised: #1b2329;
+  --line: #28333a;
+  --line-soft: #1e272d;
+  --ink: #e9eff1;
+  --ink-2: #b6c5cb;
+  --muted: #8ba0a8;
+  --direct: #4fc8d9;
+  --direct-dim: #1d454e;
+  --tail: #e4703a;
+  --tail-dim: #4a2718;
+  --warn: #e0b355;
+  --shadow: 0 1px 0 rgba(255, 255, 255, .02), 0 10px 30px rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+.wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 18px 132px;
+}
+
+/* ------------------------------------------------------------------ type */
+
+.mono {
+  font-family: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.eyebrow {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------- header */
+
+header {
+  padding: 26px 0 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.wordmark {
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  font-size: 30px;
+  letter-spacing: .015em;
+  line-height: 1;
+  margin: 0;
+  text-transform: uppercase;
+}
+.wordmark span { color: var(--direct); }
+
+.tagline {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 34ch;
+  text-wrap: balance;
+}
+
+/* --------------------------------------------------------------- section */
+
+section { padding: 22px 0; border-bottom: 1px solid var(--line-soft); }
+
+.sec-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.sec-head .step {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: var(--direct);
+  letter-spacing: .1em;
+}
+
+/* --------------------------------------------------------------- buttons */
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color .14s, background .14s, color .14s;
+}
+.btn:hover { border-color: var(--direct); }
+.btn:focus-visible { outline: 2px solid var(--direct); outline-offset: 2px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--direct); border-color: var(--direct); color: var(--ground); font-weight: 600; }
+
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------------------------------------------------------------- source */
+
+.now {
+  margin-top: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  display: grid;
+  gap: 10px;
+}
+.now[hidden] { display: none !important; }
+
+.now-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  min-width: 0;
+}
+.now-title strong { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.transport { display: flex; align-items: center; gap: 12px; }
+.play {
+  width: 42px; height: 42px; flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--direct);
+  background: var(--direct);
+  color: var(--ground);
+  display: grid; place-items: center;
+  cursor: pointer; padding: 0;
+}
+.play:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.play svg { width: 16px; height: 16px; fill: currentColor; }
+
+.scrub { flex: 1; min-width: 0; }
+.time { font-size: 11.5px; color: var(--muted); flex: none; }
+
+.hint { color: var(--muted); font-size: 12.5px; margin: 10px 0 0; }
+.hint a { color: var(--direct); }
+
+/* ---------------------------------------------------------------- venues */
+
+.venues {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+@media (min-width: 560px) { .venues { grid-template-columns: repeat(3, 1fr); } }
+
+.venue {
+  appearance: none;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: var(--r);
+  padding: 12px 12px 11px;
+  cursor: pointer;
+  display: grid;
+  gap: 3px;
+  transition: border-color .14s, background .14s;
+}
+.venue:hover { border-color: var(--line); border-left-color: var(--direct); }
+.venue:focus-visible { outline: 2px solid var(--direct); outline-offset: 2px; }
+.venue[aria-pressed="true"] {
+  border-left-color: var(--direct);
+  background: var(--raised);
+  border-color: var(--direct);
+}
+.venue h3 {
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.05;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: .01em;
+}
+.venue .rt {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: .05em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.venue[aria-pressed="true"] .rt { color: var(--tail); }
+
+/* ------------------------------------------------------------------ room */
+
+.room-head { display: grid; gap: 4px; margin-bottom: 16px; }
+.room-head h2 {
+  font-family: Anton, 'Arial Narrow', Impact, sans-serif;
+  font-weight: 400;
+  font-size: clamp(30px, 9vw, 44px);
+  line-height: .98;
+  margin: 0;
+  text-transform: uppercase;
+}
+.room-head .place { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.room-head .note { color: var(--ink-2); font-size: 14px; max-width: 52ch; margin: 6px 0 0; text-wrap: balance; }
+
+.plot {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 12px 12px 8px;
+}
+.plot canvas { display: block; width: 100%; height: 130px; }
+.plot-legend {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); margin-top: 6px;
+}
+.plot-legend i { display: inline-block; width: 9px; height: 3px; margin-right: 5px; vertical-align: middle; }
+.plot.busy { opacity: .45; }
+
+.readouts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--line-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r);
+  margin-top: 12px;
+  overflow: hidden;
+}
+@media (min-width: 460px) { .readouts { grid-template-columns: repeat(4, 1fr); } }
+.readout { background: var(--panel); padding: 10px 12px; display: grid; gap: 2px; }
+.readout dt { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.readout dd {
+  margin: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+.readout dd small { font-size: 10.5px; color: var(--muted); letter-spacing: .04em; }
+
+/* decay-time bars */
+.bands { margin-top: 12px; }
+.bands-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; align-items: end; height: 74px; }
+.band { display: grid; align-content: end; gap: 4px; height: 100%; }
+.band .bar { background: var(--tail); border-radius: 1px 1px 0 0; min-height: 2px; transition: height .3s ease; }
+.band .v { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--ink-2); text-align: center; font-variant-numeric: tabular-nums; }
+.band-axis { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 4px; }
+.band-axis span { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); text-align: center; }
+
+/* -------------------------------------------------------------- controls */
+
+.controls { display: grid; gap: 18px; }
+.ctl { display: grid; gap: 7px; }
+.ctl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.ctl-top label { font-size: 13.5px; font-weight: 600; }
+.ctl-top .val { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--direct); font-variant-numeric: tabular-nums; }
+.ctl-ends { display: flex; justify-content: space-between; gap: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.ctl-note { font-size: 12.5px; color: var(--muted); margin: 0; max-width: 54ch; }
+
+input[type="range"] {
+  appearance: none; -webkit-appearance: none;
+  width: 100%; height: 22px; background: transparent; cursor: pointer; margin: 0;
+}
+input[type="range"]::-webkit-slider-runnable-track { height: 3px; background: var(--line); border-radius: 2px; }
+input[type="range"]::-moz-range-track { height: 3px; background: var(--line); border-radius: 2px; }
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 19px; height: 19px; border-radius: 50%;
+  background: var(--direct); border: 3px solid var(--ground); margin-top: -8px;
+  box-shadow: 0 0 0 1px var(--direct);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 15px; height: 15px; border-radius: 50%; background: var(--direct);
+  border: 3px solid var(--ground); box-shadow: 0 0 0 1px var(--direct);
+}
+input[type="range"]:focus-visible { outline: 2px solid var(--direct); outline-offset: 4px; }
+
+.seg { display: inline-flex; width: max-content; justify-self: start; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.seg button {
+  appearance: none; border: 0; background: var(--panel); color: var(--muted);
+  font: inherit; font-size: 12px; padding: 6px 12px; cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--raised); color: var(--ink); font-weight: 600; }
+
+/* ----------------------------------------------------------------- notes */
+
+details.notes { margin-top: 20px; border-top: 1px solid var(--line-soft); padding-top: 14px; }
+details.notes summary { cursor: pointer; font-size: 13px; color: var(--direct); list-style: none; }
+details.notes summary::-webkit-details-marker { display: none; }
+details.notes summary::before { content: '+ '; font-family: 'IBM Plex Mono', monospace; }
+details.notes[open] summary::before { content: '– '; }
+details.notes p { color: var(--muted); font-size: 13px; max-width: 62ch; }
+details.notes strong { color: var(--ink-2); }
+
+/* ------------------------------------------------------------------- bar */
+
+.ab-bar {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+  z-index: 20;
+}
+.ab-inner { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+
+.ab {
+  flex: 1;
+  appearance: none;
+  border: 1px solid var(--tail);
+  background: transparent;
+  color: var(--tail);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  padding: 13px 10px; border-radius: var(--r);
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: background .1s, color .1s;
+}
+.ab[data-on="true"] { background: var(--tail); color: var(--ground); font-weight: 600; }
+.ab:focus-visible { outline: 2px solid var(--tail); outline-offset: 2px; }
+.ab[disabled] { opacity: .4; cursor: not-allowed; }
+
+.meter { width: 46px; height: 40px; flex: none; display: grid; grid-template-rows: 1fr auto; gap: 4px; }
+.meter-track { background: var(--line-soft); border-radius: 1px; overflow: hidden; display: grid; align-items: end; }
+.meter-fill { background: var(--direct); height: 0%; transition: height .06s linear; }
+.meter span { font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; letter-spacing: .1em; color: var(--muted); text-align: center; }
+
+.status {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  background: var(--ink); color: var(--ground);
+  font-size: 12.5px; padding: 8px 14px; border-radius: 100px;
+  z-index: 30; opacity: 0; pointer-events: none; transition: opacity .2s;
+  max-width: min(92vw, 520px); text-align: center;
+}
+.status[data-show="true"] { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+
+</style>
+<div class="wrap">
+
+  <header>
+    <h1 class="wordmark">Sound<span>&nbsp;Stage</span></h1>
+    <p class="tagline">Play a track through a loudspeaker system, in a room, and listen to it on headphones.</p>
+  </header>
+
+  <section id="source">
+    <div class="sec-head"><span class="step mono">01</span><p class="eyebrow">Source</p></div>
+    <div class="btn-row">
+      <button class="btn primary" id="pick-file">Choose an audio file</button>
+      <button class="btn" id="pick-capture">Capture tab audio</button>
+      <button class="btn" id="pick-mic">Live input</button>
+    </div>
+    <input type="file" id="file-input" accept="audio/*" hidden>
+
+    <div class="now" id="now" hidden>
+      <div class="now-title">
+        <span class="eyebrow" id="now-kind">File</span>
+        <strong id="now-name">—</strong>
+      </div>
+      <div class="transport" id="transport">
+        <button class="play" id="play" aria-label="Play">
+          <svg id="play-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.5 14 8 3 14.5z"/></svg>
+        </button>
+        <input type="range" class="scrub" id="scrub" min="0" max="1000" value="0" step="1" aria-label="Seek">
+        <span class="time mono" id="time">0:00</span>
+      </div>
+    </div>
+
+    <p class="hint" id="source-hint">
+      Streaming apps keep their audio to themselves — no app on a phone can reach inside Spotify or Apple Music.
+      Play a file here instead, or on a computer share a browser tab and process what it is playing.
+    </p>
+  </section>
+
+  <section id="venue-section">
+    <div class="sec-head"><span class="step mono">02</span><p class="eyebrow">Room</p></div>
+    <div class="venues" id="venues" role="group" aria-label="Choose a room"></div>
+  </section>
+
+  <section id="room">
+    <div class="room-head">
+      <h2 id="room-name">Living Room</h2>
+      <span class="place mono" id="room-place">Carpeted lounge, 7.5 × 5.0 m</span>
+      <p class="note" id="room-note">Two good bookshelf speakers, a sofa behind you, a window down one side.</p>
+    </div>
+
+    <div class="plot" id="plot">
+      <canvas id="decay" width="1200" height="320" role="img"
+              aria-label="Energy decay of the room response over time"></canvas>
+      <div class="plot-legend">
+        <span><i style="background:var(--direct)"></i>Direct &amp; early reflections</span>
+        <span><i style="background:var(--tail)"></i>Reverberant tail</span>
+      </div>
+    </div>
+
+    <dl class="readouts">
+      <div class="readout"><dt>Decay to −60 dB</dt><dd id="r-rt">—<small> s</small></dd></div>
+      <div class="readout"><dt>Speaker distance</dt><dd id="r-dist">—<small> m</small></dd></div>
+      <div class="readout"><dt>Sound arrives in</dt><dd id="r-t0">—<small> ms</small></dd></div>
+      <div class="readout"><dt>Reflections traced</dt><dd id="r-refl">—</dd></div>
+    </dl>
+
+    <div class="bands">
+      <p class="eyebrow" style="margin-bottom:8px">Decay time by octave band, seconds</p>
+      <div class="bands-grid" id="bands"></div>
+      <div class="band-axis" id="band-axis"></div>
+    </div>
+  </section>
+
+  <section id="controls-section">
+    <div class="sec-head"><span class="step mono">03</span><p class="eyebrow">Your seat &amp; the system</p></div>
+    <div class="controls">
+      <div class="ctl">
+        <div class="ctl-top"><label for="seat">Where you are standing</label><span class="val mono" id="seat-val">2.6 m out</span></div>
+        <input type="range" id="seat" min="0" max="100" value="35">
+        <div class="ctl-ends"><span>Close to the speakers</span><span>Back of the room</span></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-top"><label for="drive">How hard the system is pushed</label><span class="val mono" id="drive-val">100 %</span></div>
+        <input type="range" id="drive" min="0" max="160" value="100">
+        <div class="ctl-ends"><span>Clean</span><span>Wide open</span></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-top"><label for="vol">Volume</label><span class="val mono" id="vol-val">85 %</span></div>
+        <input type="range" id="vol" min="0" max="120" value="85">
+        <div class="ctl-ends"><span>Quiet</span><span>Loud</span></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-top"><label id="q-label">Response length</label></div>
+        <div class="seg" role="group" aria-labelledby="q-label" id="quality">
+          <button type="button" data-q="0.55" aria-pressed="false">Light</button>
+          <button type="button" data-q="1" aria-pressed="true">Full</button>
+        </div>
+        <p class="ctl-note" id="q-note">Full length uses the whole measured decay. Light halves it, which builds a room about twice as fast on a slower phone.</p>
+      </div>
+    </div>
+
+    <details class="notes">
+      <summary>What this is actually doing, and why Spotify can't be piped through it</summary>
+      <p><strong>The model.</strong> Each room is a real shoebox in metres with real surface materials. The app traces
+        the direct sound and every early reflection off those surfaces with an image-source model, in seven octave
+        bands, then continues the decay with a diffuse tail whose reverberation time comes out of the Eyring equation
+        for that room. Each reflection is placed at both of your ears separately, with the timing and the
+        frequency-dependent shadowing a head of that size would cause. That is what makes the room appear outside your
+        head rather than between your ears. The loudspeaker voicing is applied <em>before</em> the room, in the order
+        reality does it.</p>
+      <p><strong>The source.</strong> Nothing running on a phone can read the audio coming out of another app.
+        On iOS there is no system-audio capture at all, and the streaming services encrypt their playback on every
+        platform. So this app has to be the player. Files work everywhere; on a desktop browser you can also share a
+        tab and process whatever it is playing, as long as that tab is not using DRM.</p>
+      <p><strong>Headphones, please.</strong> The whole point is that you supply the ears. Played on speakers you
+        would be listening to a room inside a room.</p>
+    </details>
+  </section>
+</div>
+
+<div class="ab-bar">
+  <div class="ab-inner">
+    <button class="ab" id="ab" data-on="false" disabled>Hold to hear it dry</button>
+    <div class="meter" aria-hidden="true">
+      <div class="meter-track"><div class="meter-fill" id="meter"></div></div>
+      <span>OUT</span>
+    </div>
+  </div>
+</div>
+
+<div class="status" id="status" role="status" aria-live="polite"></div>
+<script type="module">
+/* ===== src/acoustics.js ===== */
+/**
+ * acoustics.js — physical constants, material data and room-acoustics maths.
+ *
+ * Everything downstream works in seven octave bands centred on
+ * 125 / 250 / 500 / 1k / 2k / 4k / 8k Hz. That is the resolution real
+ * acoustic measurements are published at, so the material tables below are
+ * the published numbers rather than invented curves.
+ */
+
+const C_AIR = 343;          // speed of sound, m/s, 20 °C
+const HEAD_RADIUS = 0.0875; // m — standard spherical-head radius
+
+const BAND_CENTRES = [125, 250, 500, 1000, 2000, 4000, 8000];
+const NBANDS = BAND_CENTRES.length;
+
+/** Linkwitz-Riley crossover points sitting between the octave centres. */
+const BAND_EDGES = [176.8, 353.6, 707.1, 1414.2, 2828.4, 5656.9];
+
+/**
+ * Atmospheric absorption, dB per metre, 20 °C / 50 % RH (ISO 9613-1).
+ * Only matters in the big rooms — across a stadium it removes ~12 dB at 8 kHz,
+ * which is exactly why distant PA sounds dull.
+ */
+const AIR_ABSORPTION_DB_M = [0.0004, 0.001, 0.0019, 0.0037, 0.0097, 0.033, 0.117];
+
+/**
+ * Sabine absorption coefficients per octave band.
+ * Sources: standard architectural-acoustics tables (Cox & D'Antonio, Vorlander).
+ */
+const MATERIALS = {
+  stone:      { name: 'Dressed stone',   a: [0.01, 0.01, 0.01, 0.02, 0.02, 0.02, 0.03], s: [0.05, 0.08, 0.10, 0.14, 0.18, 0.22, 0.25] },
+  plaster:    { name: 'Plaster on brick',a: [0.02, 0.02, 0.03, 0.04, 0.05, 0.05, 0.06], s: [0.04, 0.06, 0.08, 0.10, 0.12, 0.15, 0.18] },
+  concrete:   { name: 'Sealed concrete', a: [0.01, 0.01, 0.02, 0.02, 0.02, 0.03, 0.04], s: [0.03, 0.05, 0.07, 0.09, 0.11, 0.13, 0.15] },
+  brick:      { name: 'Bare brick',      a: [0.03, 0.03, 0.03, 0.04, 0.05, 0.07, 0.08], s: [0.08, 0.12, 0.16, 0.20, 0.24, 0.28, 0.30] },
+  gypsum:     { name: 'Plasterboard',    a: [0.29, 0.10, 0.05, 0.04, 0.07, 0.09, 0.10], s: [0.04, 0.05, 0.06, 0.08, 0.10, 0.12, 0.14] },
+  woodPanel:  { name: 'Wood panelling',  a: [0.19, 0.14, 0.09, 0.06, 0.06, 0.05, 0.05], s: [0.10, 0.14, 0.18, 0.22, 0.26, 0.30, 0.32] },
+  woodFloor:  { name: 'Wood floor',      a: [0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07], s: [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.17] },
+  carpet:     { name: 'Heavy carpet',    a: [0.08, 0.24, 0.57, 0.69, 0.71, 0.73, 0.75], s: [0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40] },
+  glass:      { name: 'Window glass',    a: [0.35, 0.25, 0.18, 0.12, 0.07, 0.04, 0.04], s: [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08] },
+  acoustic:   { name: 'Acoustic treatment', a: [0.30, 0.60, 0.85, 0.95, 0.95, 0.90, 0.88], s: [0.20, 0.30, 0.40, 0.50, 0.55, 0.60, 0.60] },
+  audience:   { name: 'Seated audience', a: [0.39, 0.57, 0.80, 0.94, 0.92, 0.87, 0.85], s: [0.30, 0.40, 0.50, 0.60, 0.65, 0.70, 0.70] },
+  pews:       { name: 'Empty wooden pews', a: [0.10, 0.09, 0.08, 0.08, 0.08, 0.08, 0.08], s: [0.25, 0.35, 0.45, 0.50, 0.55, 0.60, 0.60] },
+  naveFloor:  { name: 'Pews, aisle runner, small congregation', a: [0.16, 0.17, 0.19, 0.21, 0.23, 0.25, 0.26], s: [0.25, 0.35, 0.45, 0.50, 0.55, 0.60, 0.60] },
+  clubFloor:  { name: 'Packed dance floor',  a: [0.22, 0.38, 0.52, 0.60, 0.64, 0.66, 0.67], s: [0.30, 0.40, 0.50, 0.55, 0.60, 0.65, 0.65] },
+  softFurn:   { name: 'Sofa & soft furnishing', a: [0.20, 0.35, 0.50, 0.58, 0.62, 0.65, 0.66], s: [0.25, 0.35, 0.45, 0.50, 0.55, 0.60, 0.60] },
+  grass:      { name: 'Grass pitch',     a: [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.85], s: [0.30, 0.40, 0.50, 0.60, 0.65, 0.70, 0.70] },
+  openSky:    { name: 'Open to sky',     a: [1, 1, 1, 1, 1, 1, 1],                      s: [0, 0, 0, 0, 0, 0, 0] },
+  carTrim:    { name: 'Car trim',        a: [0.25, 0.40, 0.55, 0.65, 0.70, 0.72, 0.74], s: [0.20, 0.30, 0.40, 0.45, 0.50, 0.55, 0.55] },
+  steelDeck:  { name: 'Steel deck',      a: [0.05, 0.04, 0.03, 0.03, 0.03, 0.03, 0.03], s: [0.10, 0.14, 0.18, 0.22, 0.26, 0.30, 0.32] },
+};
+
+const SURFACES = ['xMin', 'xMax', 'yMin', 'yMax', 'floor', 'ceiling'];
+
+/** Per-surface, per-band pressure reflection coefficient beta = sqrt(1 - alpha). */
+function reflectionCoefficients(materials) {
+  return SURFACES.map((face) => {
+    const m = MATERIALS[materials[face]];
+    if (!m) throw new Error(`Unknown material for ${face}: ${materials[face]}`);
+    return m.a.map((a) => Math.sqrt(Math.max(0, 1 - a)));
+  });
+}
+
+/** Per-surface, per-band scattering coefficient — how much specular energy is diffused. */
+function scatterCoefficients(materials) {
+  return SURFACES.map((face) => MATERIALS[materials[face]].s.slice());
+}
+
+function surfaceAreas([Lx, Ly, Lz]) {
+  // Order matches SURFACES.
+  return [Ly * Lz, Ly * Lz, Lx * Lz, Lx * Lz, Lx * Ly, Lx * Ly];
+}
+
+/**
+ * Reverberation time per band, Eyring form with an air-absorption term.
+ * Eyring rather than Sabine because several of these rooms are very absorbent
+ * (a stadium is mostly open sky) and Sabine badly overestimates there.
+ */
+function reverbTimes(dims, materials) {
+  const [Lx, Ly, Lz] = dims;
+  const V = Lx * Ly * Lz;
+  const areas = surfaceAreas(dims);
+  const S = areas.reduce((t, a) => t + a, 0);
+
+  return BAND_CENTRES.map((_, b) => {
+    let absorbed = 0;
+    SURFACES.forEach((face, i) => { absorbed += areas[i] * MATERIALS[materials[face]].a[b]; });
+    const meanAlpha = Math.min(0.995, absorbed / S);
+    const m = AIR_ABSORPTION_DB_M[b] / 8.686; // dB/m -> nepers/m
+    const denom = -S * Math.log(1 - meanAlpha) + 4 * m * V;
+    return denom > 1e-6 ? Math.min(12, (0.161 * V) / denom) : 0.05;
+  });
+}
+
+/**
+ * Mixing time — where discrete reflections give way to a diffuse tail.
+ * Polack's V-based estimate; used as the crossover between the image-source
+ * model and the stochastic tail.
+ */
+function mixingTime(dims) {
+  const V = dims[0] * dims[1] * dims[2];
+  return Math.min(0.25, Math.max(0.012, (2 * Math.sqrt(V)) / 1000));
+}
+
+const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+const lerp = (a, b, t) => a + (b - a) * t;
+const lerpVec = (a, b, t) => a.map((v, i) => lerp(v, b[i], t));
+const dbToGain = (db) => Math.pow(10, db / 20);
+
+/* ===== src/brir.js ===== */
+/**
+ * brir.js — synthesises binaural room impulse responses.
+ *
+ * Why binaural and not a plain stereo reverb: on headphones a conventional
+ * reverb still sounds like it is inside your skull. What makes a room appear
+ * *around* you is that each reflection reaches the two ears at slightly
+ * different times and with a different frequency balance, because your head is
+ * in the way. Model that and the church moves outside your head.
+ *
+ * The response is built in three layers:
+ *   1. Direct sound + early reflections, from a randomised image-source model
+ *      of a shoebox room, with per-octave-band wall absorption and scattering,
+ *      air absorption, and frequency-dependent loudspeaker directivity.
+ *   2. A stochastic late tail whose decay follows the Eyring reverberation
+ *      time per band, and whose interaural coherence follows the diffuse-field
+ *      sinc law — coherent below ~700 Hz, incoherent above it.
+ *   3. A spherical-head binaural stage: Woodworth interaural time difference
+ *      plus the Brown & Duda head-shadow magnitude, applied per band, plus
+ *      pinna cues for elevation and front/back.
+ *
+ * The seven band signals are kept separate all the way through and only summed
+ * after a Linkwitz-Riley filterbank, so the frequency-dependent behaviour
+ * survives instead of being smeared into one broadband decay.
+ */
+
+
+
+/* ---------------------------------------------------------------- helpers */
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Unit-variance white noise for the reverberant tail.
+ * Uniform rather than Gaussian on purpose: after the octave filterbank the
+ * amplitude distribution converges on Gaussian anyway, and the cheap version
+ * takes a second off building a cathedral on a phone.
+ */
+const NOISE_SCALE = Math.sqrt(12);
+function noise(rnd) {
+  return (rnd() - 0.5) * NOISE_SCALE;
+}
+
+/** 8-tap Lanczos kernel. Fractional delays matter: rounding every reflection to
+ *  the nearest sample destroys the fine interaural time differences the ear
+ *  uses to place a sound, which is most of the effect we are after. */
+function lanczos(x) {
+  if (x === 0) return 1;
+  const ax = Math.abs(x);
+  if (ax >= 4) return 0;
+  const pix = Math.PI * x;
+  return (4 * Math.sin(pix) * Math.sin(pix / 4)) / (pix * pix);
+}
+
+function addImpulse(buf, tSamples, amp) {
+  if (!(amp > 1e-9) && !(amp < -1e-9)) return;
+  const n = Math.floor(tSamples);
+  const frac = tSamples - n;
+  for (let k = -3; k <= 4; k++) {
+    const i = n + k;
+    if (i < 0 || i >= buf.length) continue;
+    buf[i] += amp * lanczos(k - frac);
+  }
+}
+
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const norm = (a) => Math.hypot(a[0], a[1], a[2]);
+
+/* ------------------------------------------------------- binaural head model */
+
+/**
+ * Brown & Duda's spherical head-shadow magnitude, evaluated at each band centre.
+ * theta is the angle between the source direction and the ear's outward axis:
+ * 0 = source at that ear, PI = source at the far ear.
+ */
+const OMEGA_0 = C_AIR / HEAD_RADIUS;
+const THETA_MIN = (150 * Math.PI) / 180;
+const ALPHA_MIN = 0.1;
+
+function headShadow(theta, out) {
+  const alpha = 1 + ALPHA_MIN / 2 + (1 - ALPHA_MIN / 2) * Math.cos((theta / THETA_MIN) * Math.PI);
+  for (let b = 0; b < NBANDS; b++) {
+    const w = (2 * Math.PI * BAND_CENTRES[b]) / (2 * OMEGA_0);
+    out[b] = Math.sqrt(1 + (alpha * w) ** 2) / Math.sqrt(1 + w * w);
+  }
+  return out;
+}
+
+/** Extra path length to one ear, relative to the head centre (Woodworth). */
+function earPathOffset(theta) {
+  return theta < Math.PI / 2
+    ? -HEAD_RADIUS * Math.cos(theta)
+    : HEAD_RADIUS * (theta - Math.PI / 2);
+}
+
+/**
+ * Pinna cues. The outer ear puts a notch in the 5-11 kHz region whose centre
+ * rises with elevation, and shadows high frequencies for sources behind you.
+ * Approximated at band resolution — enough to keep the stage in front.
+ */
+function pinnaGains(forward, up, out) {
+  out.fill(1);
+  const notchHz = 6300 * Math.pow(2, clamp(up, -1, 1) * 0.62);
+  let nearest = 0;
+  let best = Infinity;
+  for (let b = 0; b < NBANDS; b++) {
+    const d = Math.abs(Math.log2(BAND_CENTRES[b] / notchHz));
+    if (d < best) { best = d; nearest = b; }
+  }
+  out[nearest] *= 0.55;
+  if (nearest + 1 < NBANDS) out[nearest + 1] *= 0.82;
+  if (forward < 0) {
+    const back = -forward;
+    out[5] *= Math.pow(10, (-5.0 * back) / 20);
+    out[6] *= Math.pow(10, (-7.5 * back) / 20);
+    out[4] *= Math.pow(10, (-2.0 * back) / 20);
+  }
+  return out;
+}
+
+/* ------------------------------------------------------ speaker directivity */
+
+/** Exponents of a ((1+cos b)/2)^p pattern per band: near-omni in the bass,
+ *  strongly beamed at 8 kHz — the reason a room's reflections are duller than
+ *  the sound arriving straight at you. */
+const DIRECTIVITY_P = [0.15, 0.3, 0.6, 1.1, 1.8, 2.6, 3.4];
+const DIRECTIVITY_FLOOR = 0.06;
+
+function directivityGains(cosBeta, spread, out) {
+  const x = Math.max(0, (1 + cosBeta) / 2);
+  for (let b = 0; b < NBANDS; b++) {
+    const p = DIRECTIVITY_P[b] * spread;
+    out[b] = DIRECTIVITY_FLOOR + (1 - DIRECTIVITY_FLOOR) * Math.pow(x, p);
+  }
+  return out;
+}
+
+/* -------------------------------------------------------- image source model */
+
+/**
+ * Accumulates direct sound and early reflections into per-band, per-ear buffers.
+ * Returns the number of reflections actually placed.
+ */
+function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
+  const { dims, listener, yaw, source, aim, spread, beta, scat, tMix, irSeconds, t0 } = cfg;
+  const [Lx, Ly, Lz] = dims;
+
+  const fwdVec = [Math.cos(yaw), Math.sin(yaw), 0];
+  const leftVec = [-Math.sin(yaw), Math.cos(yaw), 0];
+
+  // Enough reflection orders to reach the mixing time in the smallest dimension.
+  const minDim = Math.min(Lx, Ly, Lz);
+  const order = clamp(Math.ceil((tMix * 1.6 * C_AIR) / minDim), 2, 7);
+
+  const shadowL = new Float32Array(NBANDS);
+  const shadowR = new Float32Array(NBANDS);
+  const pinnaL = new Float32Array(NBANDS);
+  const pinnaR = new Float32Array(NBANDS);
+  const dirG = new Float32Array(NBANDS);
+
+  // All handover timing is measured from the arrival of the direct sound, not
+  // from zero: across a stadium the direct sound does not turn up for a third
+  // of a second, and the tail must not start before it.
+  const tFade = t0 + tMix;
+  const tEnd = Math.min(irSeconds, tFade + 0.5 * tMix);
+  let placed = 0;
+
+  for (let ux = 0; ux <= 1; ux++) {
+    for (let uy = 0; uy <= 1; uy++) {
+      for (let uz = 0; uz <= 1; uz++) {
+        const sx = 1 - 2 * ux;
+        const sy = 1 - 2 * uy;
+        const sz = 1 - 2 * uz;
+        for (let mx = -order; mx <= order; mx++) {
+          for (let my = -order; my <= order; my++) {
+            for (let mz = -order; mz <= order; mz++) {
+              // Wall hit counts, per Allen & Berkley.
+              const nX0 = Math.abs(mx - ux), nX1 = Math.abs(mx);
+              const nY0 = Math.abs(my - uy), nY1 = Math.abs(my);
+              const nZ0 = Math.abs(mz - uz), nZ1 = Math.abs(mz);
+              const refl = nX0 + nX1 + nY0 + nY1 + nZ0 + nZ1;
+              if (refl > order + 2) continue;
+
+              let px = sx * source[0] + 2 * mx * Lx;
+              let py = sy * source[1] + 2 * my * Ly;
+              let pz = sz * source[2] + 2 * mz * Lz;
+
+              // Randomised image positions break up the metallic comb filtering
+              // a perfect shoebox would otherwise produce.
+              if (refl > 1) {
+                const j = 0.055 * (refl - 1);
+                px += (rnd() - 0.5) * 2 * j;
+                py += (rnd() - 0.5) * 2 * j;
+                pz += (rnd() - 0.5) * 2 * j;
+              }
+
+              const v = sub([px, py, pz], listener);
+              const d = norm(v);
+              const t = d / C_AIR;
+              if (t > tEnd) continue;
+
+              // Handover taper into the stochastic tail.
+              let fade = 1;
+              if (t > tFade) {
+                const u = (t - tFade) / (0.5 * tMix);
+                fade = 0.5 * (1 + Math.cos(Math.PI * clamp(u, 0, 1)));
+              }
+              if (fade < 0.002) continue;
+
+              const inv = 1 / d;
+              const dirUnit = [v[0] * inv, v[1] * inv, v[2] * inv];
+              const forward = dot(dirUnit, fwdVec);
+              const left = dot(dirUnit, leftVec);
+              const up = dirUnit[2];
+
+              const thetaL = Math.acos(clamp(left, -1, 1));
+              const thetaR = Math.acos(clamp(-left, -1, 1));
+              headShadow(thetaL, shadowL);
+              headShadow(thetaR, shadowR);
+              pinnaGains(forward, up, pinnaL);
+              pinnaGains(forward, up, pinnaR);
+
+              // Emission angle: the source's aim is mirrored along with it.
+              const aimImg = [sx * aim[0], sy * aim[1], sz * aim[2]];
+              directivityGains(-dot(aimImg, dirUnit), spread, dirG);
+
+              const tL = ((d + earPathOffset(thetaL)) / C_AIR) * sampleRate;
+              const tR = ((d + earPathOffset(thetaR)) / C_AIR) * sampleRate;
+
+              const spread1r = fade / Math.max(d, 0.35);
+              const counts = [nX0, nX1, nY0, nY1, nZ0, nZ1];
+
+              for (let b = 0; b < NBANDS; b++) {
+                let wall = 1;
+                for (let f = 0; f < 6; f++) {
+                  const n = counts[f];
+                  if (n === 0) continue;
+                  wall *= Math.pow(beta[f][b] * Math.sqrt(1 - scat[f][b]), n);
+                }
+                if (wall < 1e-5) continue;
+                const air = Math.pow(10, (-AIR_ABSORPTION_DB_M[b] * d) / 20);
+                const base = spread1r * wall * air * dirG[b];
+                addImpulse(bandBuf[b][0], tL, base * shadowL[b] * pinnaL[b]);
+                addImpulse(bandBuf[b][1], tR, base * shadowR[b] * pinnaR[b]);
+              }
+              placed++;
+            }
+          }
+        }
+      }
+    }
+  }
+  return { placed, order };
+}
+
+/* ------------------------------------------------------------- late reverb */
+
+/** Diffuse-field interaural coherence: sinc(2*pi*f*d/c) across the head. */
+function diffuseCoherence(f) {
+  const x = (2 * Math.PI * f * 2 * HEAD_RADIUS) / C_AIR;
+  return x === 0 ? 1 : Math.sin(x) / x;
+}
+
+function renderLateTail(cfg, bandBuf, sampleRate, rnd) {
+  const { rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb } = cfg;
+  if (diffuse <= 0) return;
+  const len = bandBuf[0][0].length;
+
+  const iFadeStart = Math.floor((t0 + 0.5 * tMix) * sampleRate);
+  const iFadeEnd = Math.floor((t0 + tMix) * sampleRate);
+  const iMeasureFrom = Math.floor((t0 + 0.55 * tMix) * sampleRate);
+  const fadeSpan = Math.max(1, iFadeEnd - iFadeStart);
+
+  const tailL = new Float32Array(len);
+  const tailR = new Float32Array(len);
+
+  for (let b = 0; b < NBANDS; b++) {
+    const T = Math.max(0.05, Math.min(rt60[b], irSeconds));
+    const gamma = diffuseCoherence(BAND_CENTRES[b]);
+    const mixA = Math.abs(gamma);
+    const mixB = Math.sqrt(Math.max(0, 1 - gamma * gamma));
+    const sgn = gamma < 0 ? -1 : 1;
+
+    tailL.fill(0);
+    tailR.fill(0);
+
+    let last = iFadeStart;
+    for (let i = Math.max(0, iFadeStart); i < len; i++) {
+      const env = Math.pow(10, (-3 * (i / sampleRate - t0 - 0.5 * tMix)) / T);
+      if (env < 1e-6) break;
+      const u = (i - iFadeStart) / fadeSpan;
+      const fade = u >= 1 ? 1 : 0.5 * (1 - Math.cos(Math.PI * u));
+      const g = fade * env;
+      const nc = noise(rnd);
+      tailL[i] = g * (mixA * nc + mixB * noise(rnd));
+      tailR[i] = g * (sgn * mixA * nc + mixB * noise(rnd));
+      last = i;
+    }
+
+    // Match the tail to the energy of the early reflections it takes over from,
+    // measured in the window just before the handover. Levels then join up
+    // however absorbent the room turns out to be.
+    let eIsmL = 0, eIsmR = 0, eTailL = 0, eTailR = 0, n = 0;
+    for (let i = iMeasureFrom; i < iFadeEnd && i < len; i++) {
+      eIsmL += bandBuf[b][0][i] ** 2;
+      eIsmR += bandBuf[b][1][i] ** 2;
+      eTailL += tailL[i] ** 2;
+      eTailR += tailR[i] ** 2;
+      n++;
+    }
+    if (n === 0) continue;
+
+    // Outdoors there may be no early reflections in that window at all — one
+    // ground bounce and then nothing. There is still some diffuse return from
+    // the crowd and the site, so the venue states how far below the direct
+    // sound it sits and the level is taken from there instead.
+    const floorE = 1e-14 * n;
+    if (eIsmL < floorE && eIsmR < floorE && diffuseRefDb != null) {
+      const ref = Math.pow(10, diffuseRefDb / 10);
+      let dL = 0, dR = 0, dn = 0;
+      const from = Math.max(0, Math.floor(t0 * sampleRate) - 4);
+      const to = Math.min(len, from + Math.ceil(0.03 * sampleRate));
+      for (let i = from; i < to; i++) { dL += bandBuf[b][0][i] ** 2; dR += bandBuf[b][1][i] ** 2; dn++; }
+      if (dn > 0) { eIsmL = (dL / dn) * ref * n; eIsmR = (dR / dn) * ref * n; }
+    }
+    const kL = eTailL > 1e-20 ? diffuse * Math.sqrt(eIsmL / eTailL) : 0;
+    const kR = eTailR > 1e-20 ? diffuse * Math.sqrt(eIsmR / eTailR) : 0;
+    if (kL === 0 && kR === 0) continue;
+
+    for (let i = Math.max(0, iFadeStart); i <= last; i++) {
+      bandBuf[b][0][i] += kL * tailL[i];
+      bandBuf[b][1][i] += kR * tailR[i];
+    }
+  }
+}
+
+/* ------------------------------------------------------------- filterbank */
+
+function butterworthPair(ctx, type, freq) {
+  const a = ctx.createBiquadFilter();
+  const b = ctx.createBiquadFilter();
+  a.type = b.type = type;
+  a.frequency.value = b.frequency.value = freq;
+  a.Q.value = b.Q.value = Math.SQRT1_2;
+  a.connect(b);
+  return { input: a, output: b };
+}
+
+/**
+ * Sums the seven band signals through a Linkwitz-Riley filterbank.
+ * Runs in an OfflineAudioContext so the browser's own (SIMD) biquads do it.
+ */
+async function collapseBands(bandBuf, sampleRate, len) {
+  const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const ctx = new OfflineCtx(2, len, sampleRate);
+  for (let b = 0; b < NBANDS; b++) {
+    const buf = ctx.createBuffer(2, len, sampleRate);
+    buf.copyToChannel(bandBuf[b][0], 0);
+    buf.copyToChannel(bandBuf[b][1], 1);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    let tail = src;
+    if (b > 0) {
+      const hp = butterworthPair(ctx, 'highpass', BAND_EDGES[b - 1]);
+      tail.connect(hp.input);
+      tail = hp.output;
+    }
+    if (b < NBANDS - 1) {
+      const lp = butterworthPair(ctx, 'lowpass', BAND_EDGES[b]);
+      tail.connect(lp.input);
+      tail = lp.output;
+    }
+    tail.connect(ctx.destination);
+    src.start(0);
+  }
+  return ctx.startRendering();
+}
+
+/* ------------------------------------------------------------------ public */
+
+/**
+ * Build one binaural impulse response: a single loudspeaker in a room,
+ * rendered to the listener's two ears.
+ *
+ * @returns {Promise<AudioBuffer>} 2-channel buffer — channel 0 is the left ear.
+ */
+async function renderSpeakerBRIR(opts) {
+  const {
+    dims, materials, listener, yaw, source, aim,
+    spread = 1, sampleRate, irSeconds, seed = 1,
+    diffuse = 1, rt60Override = null, diffuseRefDb = null,
+  } = opts;
+
+  const rnd = mulberry32(seed);
+  // Outdoors there is no reverberant field for Eyring to describe: the formula
+  // still returns a number because the "room" has a huge volume, but the number
+  // is meaningless. Those venues supply their own decay instead.
+  const rt60 = rt60Override ? rt60Override.slice() : reverbTimes(dims, materials);
+  const tMix = mixingTime(dims);
+  const t0 = Math.hypot(source[0] - listener[0], source[1] - listener[1], source[2] - listener[2]) / C_AIR;
+  const len = Math.max(256, Math.round(irSeconds * sampleRate));
+
+  const bandBuf = [];
+  for (let b = 0; b < NBANDS; b++) {
+    bandBuf.push([new Float32Array(len), new Float32Array(len)]);
+  }
+
+  const cfg = {
+    dims, listener, yaw, source, aim, spread,
+    beta: reflectionCoefficients(materials),
+    scat: scatterCoefficients(materials),
+    rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb,
+  };
+
+  const ism = renderImageSources(cfg, bandBuf, sampleRate, rnd);
+  renderLateTail(cfg, bandBuf, sampleRate, rnd);
+  const rendered = await collapseBands(bandBuf, sampleRate, len);
+
+  return { buffer: rendered, rt60, tMix, t0, reflections: ism.placed, order: ism.order };
+}
+
+
+
+/* ===== src/venues.js ===== */
+/**
+ * venues.js — the rooms.
+ *
+ * Every venue is a real shoebox in metres with real surface materials, a real
+ * loudspeaker position and a real seat. Nothing here is a reverb preset with a
+ * decay-time knob: change a dimension or a wall covering and the sound changes
+ * the way the physics says it should. The reverberation times printed in the
+ * app are computed from these numbers, not typed in.
+ *
+ * Coordinates: x runs from the back of the room towards the stage, y across it,
+ * z upwards, with the corner of the room at the origin. The listener faces +x,
+ * so their left ear points towards +y.
+ */
+
+/**
+ * Loudspeaker voicings, applied to the signal *before* the room — the same
+ * order as reality: amplifier and cabinet first, then the air.
+ *   hp/lp      corner frequencies and Q of the system's band limits
+ *   bands      peaking EQ sections, [freq, Q, gain dB]
+ *   drive      soft-clip amount, 0-1; big rigs are never quite clean
+ */
+const SYSTEMS = {
+  monitors: {
+    name: 'Nearfield monitors',
+    hp: [42, 0.8], lp: [21000, 0.7],
+    bands: [[2600, 1.1, 0.6]],
+    drive: 0.0,
+  },
+  bookshelf: {
+    name: 'Hi-fi bookshelf pair',
+    hp: [52, 0.9], lp: [19000, 0.7],
+    bands: [[95, 1.0, 1.6], [1500, 0.9, -1.0], [7000, 0.8, 1.4]],
+    drive: 0.02,
+  },
+  clubPA: {
+    name: 'Small club PA',
+    hp: [58, 0.9], lp: [15000, 0.7],
+    bands: [[140, 1.2, 2.0], [420, 1.0, -1.8], [3200, 1.0, 2.2]],
+    drive: 0.10,
+  },
+  columnPA: {
+    name: 'Column array + house organ loft',
+    hp: [92, 0.9], lp: [10500, 0.7],
+    bands: [[260, 1.1, -2.4], [1900, 0.9, 2.6], [5200, 1.0, -2.0]],
+    drive: 0.07,
+  },
+  hallRig: {
+    name: 'Discreet reinforcement',
+    hp: [40, 0.8], lp: [18000, 0.7],
+    bands: [[220, 1.0, -0.8], [3400, 0.9, 1.0]],
+    drive: 0.01,
+  },
+  soundSystem: {
+    name: 'Stacked club rig, horn-loaded subs',
+    hp: [28, 0.7], lp: [16500, 0.7],
+    bands: [[48, 1.1, 5.0], [95, 1.3, 2.4], [380, 1.1, -3.0], [2800, 1.0, 2.0]],
+    drive: 0.24,
+  },
+  lineArray: {
+    name: 'Flown line array + ground subs',
+    hp: [36, 0.8], lp: [16000, 0.7],
+    bands: [[55, 1.0, 3.6], [300, 1.1, -2.6], [2400, 0.9, 2.8], [9000, 0.8, 1.6]],
+    drive: 0.16,
+  },
+  carDoors: {
+    name: 'Factory door speakers',
+    hp: [74, 1.1], lp: [13000, 0.7],
+    bands: [[120, 1.4, 2.6], [340, 1.2, -4.0], [4200, 1.1, 2.8]],
+    drive: 0.09,
+  },
+};
+
+const VENUES = [
+  {
+    id: 'studio',
+    name: 'Control Room',
+    place: 'Treated studio, 6.5 × 4.8 m',
+    note: 'The reference. Almost no room — this is roughly what the mix engineer heard.',
+    system: 'monitors',
+    dims: [6.5, 4.8, 3.0],
+    materials: { xMin: 'acoustic', xMax: 'acoustic', yMin: 'acoustic', yMax: 'gypsum', floor: 'woodFloor', ceiling: 'acoustic' },
+    seat: { near: [3.1, 2.4, 1.2], far: [1.4, 2.4, 1.2] },
+    speakers: [[4.5, 3.05, 1.25], [4.5, 1.75, 1.25]],
+    spread: 1.0, irSeconds: 1.2, trimDb: 0,
+  },
+  {
+    id: 'living',
+    name: 'Living Room',
+    place: 'Carpeted lounge, 7.5 × 5.0 m',
+    note: 'Two good bookshelf speakers, a sofa behind you, a window down one side.',
+    system: 'bookshelf',
+    dims: [7.5, 5.0, 2.7],
+    materials: { xMin: 'softFurn', xMax: 'gypsum', yMin: 'glass', yMax: 'gypsum', floor: 'carpet', ceiling: 'gypsum' },
+    seat: { near: [3.6, 2.5, 1.15], far: [1.3, 2.5, 1.15] },
+    speakers: [[5.9, 3.7, 1.05], [5.9, 1.3, 1.05]],
+    spread: 1.0, irSeconds: 1.6, trimDb: 0,
+  },
+  {
+    id: 'jazz',
+    name: 'Jazz Club',
+    place: 'Brick basement, 12 × 9 m',
+    note: 'Low ceiling, bare brick, a small PA barely two tables away.',
+    system: 'clubPA',
+    dims: [12, 9, 3.2],
+    materials: { xMin: 'audience', xMax: 'brick', yMin: 'brick', yMax: 'woodPanel', floor: 'woodFloor', ceiling: 'acoustic' },
+    seat: { near: [7.0, 4.6, 1.15], far: [3.2, 3.4, 1.15] },
+    speakers: [[10.2, 6.3, 2.05], [10.2, 2.7, 2.05]],
+    spread: 1.15, irSeconds: 2.0, trimDb: 0,
+  },
+  {
+    id: 'hall',
+    name: 'Concert Hall',
+    place: 'Shoebox hall, 45 × 22 × 17 m',
+    note: 'Plaster and wood, a full house, the long even decay these rooms are built for.',
+    system: 'hallRig',
+    dims: [45, 22, 17],
+    materials: { xMin: 'woodPanel', xMax: 'woodPanel', yMin: 'woodPanel', yMax: 'plaster', floor: 'audience', ceiling: 'plaster' },
+    seat: { near: [33, 11, 1.35], far: [11, 11, 1.35] },
+    speakers: [[41, 14.6, 3.2], [41, 7.4, 3.2]],
+    spread: 1.0, irSeconds: 3.6, trimDb: 0,
+  },
+  {
+    id: 'church',
+    name: 'Stone Church',
+    place: 'Stone nave, 30 × 14 × 15 m',
+    note: 'Stained glass, a hard floor and five seconds of tail. Everything blurs into everything.',
+    system: 'columnPA',
+    dims: [30, 14, 15],
+    materials: { xMin: 'woodPanel', xMax: 'stone', yMin: 'glass', yMax: 'plaster', floor: 'naveFloor', ceiling: 'plaster' },
+    seat: { near: [21, 7.2, 1.3], far: [5.5, 6.4, 1.3] },
+    speakers: [[26.5, 9.6, 4.2], [26.5, 4.4, 4.2]],
+    spread: 1.25, irSeconds: 5.2, trimDb: 0,
+  },
+  {
+    id: 'club',
+    name: 'Nightclub',
+    place: 'Concrete room, 24 × 16 m',
+    note: 'Horn-loaded subs, a steel ceiling and a floor full of people soaking up the top.',
+    system: 'soundSystem',
+    dims: [24, 16, 5.5],
+    materials: { xMin: 'audience', xMax: 'concrete', yMin: 'concrete', yMax: 'brick', floor: 'clubFloor', ceiling: 'steelDeck' },
+    seat: { near: [17.5, 8.4, 1.6], far: [5.5, 8.4, 1.6] },
+    speakers: [[21.5, 11.6, 2.6], [21.5, 4.4, 2.6]],
+    spread: 1.3, irSeconds: 2.6, trimDb: 0,
+  },
+  {
+    id: 'stadium',
+    name: 'Stadium',
+    place: 'Open bowl, 190 × 140 m',
+    note: 'Ninety metres of air between you and the arrays. The top end never survives the trip.',
+    system: 'lineArray',
+    dims: [190, 140, 38],
+    materials: { xMin: 'audience', xMax: 'audience', yMin: 'audience', yMax: 'audience', floor: 'grass', ceiling: 'openSky' },
+    seat: { near: [82, 70, 6], far: [22, 70, 24] },
+    speakers: [[150, 100, 27], [150, 40, 27]],
+    spread: 1.7, irSeconds: 3.6, trimDb: 0,
+  },
+  {
+    id: 'field',
+    name: 'Open Air Field',
+    place: 'Festival ground, no walls',
+    note: 'Nothing to reflect off but the grass. Just distance, air and the ground bounce.',
+    system: 'lineArray',
+    dims: [300, 300, 120],
+    materials: { xMin: 'openSky', xMax: 'openSky', yMin: 'openSky', yMax: 'openSky', floor: 'grass', ceiling: 'openSky' },
+    seat: { near: [175, 150, 1.65], far: [45, 150, 1.65] },
+    speakers: [[232, 166, 8.5], [232, 134, 8.5]],
+    spread: 1.7, irSeconds: 1.9, trimDb: 0,
+    // No walls means no reverberant field. What little decay there is comes off
+    // the crowd and the distant site structures, so it is stated rather than
+    // derived — Eyring has nothing to work with out here.
+    diffuse: 1,
+    rt60Override: [0.80, 0.68, 0.55, 0.44, 0.34, 0.25, 0.18],
+    diffuseRefDb: -21,
+  },
+  {
+    id: 'car',
+    name: 'Car',
+    place: 'Saloon cabin, 2.4 × 1.6 m',
+    note: 'Door speakers a foot from one ear and three feet from the other. Nothing is centred.',
+    system: 'carDoors',
+    dims: [2.4, 1.6, 1.15],
+    materials: { xMin: 'carTrim', xMax: 'glass', yMin: 'glass', yMax: 'glass', floor: 'carpet', ceiling: 'carTrim' },
+    seat: { near: [0.95, 0.48, 0.82], far: [0.62, 0.48, 0.82] },
+    speakers: [[1.62, 1.46, 0.32], [1.62, 0.14, 0.32]],
+    spread: 1.1, irSeconds: 0.6, trimDb: 0,
+  },
+];
+
+const venueById = (id) => VENUES.find((v) => v.id === id) || VENUES[1];
+
+/* ===== src/engine.js ===== */
+/**
+ * engine.js — the live signal path.
+ *
+ * The chain follows the real one, in order:
+ *
+ *   source -> loudspeaker voicing (EQ + soft clip) -> room (convolution) -> ears
+ *
+ * Putting the speaker before the room matters. A stadium rig is already
+ * band-limited and driven hard by the time its sound reaches the air, so the
+ * room reverberates a signal that has been through the PA — not a clean one.
+ * Doing it the other way round is the usual reason "amp sim plus reverb"
+ * sounds like an effect rather than a place.
+ *
+ * The room is two convolutions, one per loudspeaker, each with a two-channel
+ * binaural response. The left channel of the music goes only through the left
+ * speaker's response and arrives at both ears; likewise the right. That is what
+ * a real pair of speakers in a real room does to a stereo recording.
+ */
+
+
+
+
+
+const RAMP = 0.02;
+
+/* ------------------------------------------------------- loudspeaker stage */
+
+function driveCurve(amount) {
+  const d = clamp(amount, 0, 0.95);
+  const n = 2048;
+  const curve = new Float32Array(n);
+  const k = 1 + d * 14;
+  const tk = Math.tanh(k);
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1;
+    curve[i] = (1 - d) * x + d * (Math.tanh(k * x) / tk);
+  }
+  return curve;
+}
+
+/**
+ * Build one loudspeaker voicing. Used for the live chain and, identically, for
+ * the calibration render — they have to be the same circuit or the level
+ * matching would be measuring something the listener never hears.
+ */
+function makeVoicing(ctx, sys, drive) {
+  const hp = ctx.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = sys.hp[0];
+  hp.Q.value = sys.hp[1];
+
+  let node = hp;
+  for (const [f, q, g] of sys.bands) {
+    const pk = ctx.createBiquadFilter();
+    pk.type = 'peaking';
+    pk.frequency.value = f;
+    pk.Q.value = q;
+    pk.gain.value = g;
+    node.connect(pk);
+    node = pk;
+  }
+
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = sys.lp[0];
+  lp.Q.value = sys.lp[1];
+  node.connect(lp);
+
+  const shaper = ctx.createWaveShaper();
+  shaper.oversample = '4x';
+  shaper.curve = driveCurve((sys.drive ?? 0) * drive);
+  lp.connect(shaper);
+
+  return { input: hp, output: shaper, shaper };
+}
+
+/* ------------------------------------------------------- loudness matching */
+
+/**
+ * K-weighting from ITU-R BS.1770 — the filter broadcast loudness meters use.
+ * Coefficients are specified at 48 kHz; both the treated and the bypassed
+ * signal go through the same pair, so the small error at other sample rates
+ * cancels out of the comparison.
+ */
+const K_SHELF_B = [1.53512485958697, -2.69169618940638, 1.19839281085285];
+const K_SHELF_A = [1, -1.69065929318241, 0.73248077421585];
+const K_HPF_B = [1.0, -2.0, 1.0];
+const K_HPF_A = [1, -1.99004745483398, 0.99007225036621];
+
+function attachLoudnessMeter(ctx, node) {
+  if (!ctx.createIIRFilter) return node;
+  try {
+    const shelf = ctx.createIIRFilter(K_SHELF_B, K_SHELF_A);
+    const hpf = ctx.createIIRFilter(K_HPF_B, K_HPF_A);
+    node.connect(shelf);
+    shelf.connect(hpf);
+    return hpf;
+  } catch (_) {
+    return node;
+  }
+}
+
+/** Pink noise: the closest simple stand-in for the long-term spectrum of music. */
+function pinkStereo(length, seed = 7) {
+  let a = seed >>> 0;
+  const rnd = () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296 - 0.5;
+  };
+  const chans = [new Float32Array(length), new Float32Array(length)];
+  const s = [[0, 0, 0], [0, 0, 0]];
+  let c0 = 0, c1 = 0, c2 = 0;
+  for (let i = 0; i < length; i++) {
+    // A shared component and an independent one per channel: records are
+    // neither mono nor uncorrelated, and the two limits differ by ~3 dB.
+    const w = rnd();
+    c0 = 0.99765 * c0 + w * 0.0990460;
+    c1 = 0.96300 * c1 + w * 0.2965164;
+    c2 = 0.57000 * c2 + w * 1.0526913;
+    const common = (c0 + c1 + c2 + w * 0.1848) * 0.16;
+    for (let ch = 0; ch < 2; ch++) {
+      const v = rnd();
+      s[ch][0] = 0.99765 * s[ch][0] + v * 0.0990460;
+      s[ch][1] = 0.96300 * s[ch][1] + v * 0.2965164;
+      s[ch][2] = 0.57000 * s[ch][2] + v * 1.0526913;
+      const own = (s[ch][0] + s[ch][1] + s[ch][2] + v * 0.1848) * 0.16;
+      chans[ch][i] = clamp(0.7 * common + 0.7 * own, -1, 1);
+    }
+  }
+  return chans;
+}
+
+function rmsWindow(buffer, fromSec, toSec) {
+  const sr = buffer.sampleRate;
+  const from = Math.max(0, Math.floor(fromSec * sr));
+  const to = Math.min(buffer.length, Math.floor(toSec * sr));
+  if (to <= from) return 0;
+  let sum = 0, n = 0;
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const d = buffer.getChannelData(c);
+    for (let i = from; i < to; i++) { sum += d[i] * d[i]; n++; }
+  }
+  return Math.sqrt(sum / Math.max(n, 1));
+}
+
+/* ------------------------------------------------------------------ engine */
+
+class SoundStage {
+  constructor() {
+    this.ctx = null;
+    this.ready = false;
+    this.bypassed = false;
+    this.source = null;      // active AudioNode feeding the chain
+    this.mediaEl = null;     // <audio> when playing a file
+    this.stream = null;      // MediaStream when capturing
+    this.venue = null;
+    this.sys = null;
+    this.drive = 1;
+    this.render = null;      // last render report, for the UI
+  }
+
+  async start() {
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended') await this.ctx.resume();
+      return this.ctx;
+    }
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    this.ctx = new Ctx({ latencyHint: 'playback' });
+    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    this.buildGraph();
+    return this.ctx;
+  }
+
+  buildGraph() {
+    const ctx = this.ctx;
+
+    this.input = ctx.createGain();
+
+    // Bypass leg — the untreated signal, for A/B.
+    this.dryGain = ctx.createGain();
+    this.dryGain.gain.value = 0;
+
+    this.voicingIn = ctx.createGain();
+
+    // Force two channels downstream so mono files still feed both speakers.
+    this.stereoise = ctx.createGain();
+    this.stereoise.channelCount = 2;
+    this.stereoise.channelCountMode = 'explicit';
+    this.stereoise.channelInterpretation = 'speakers';
+
+    this.splitter = ctx.createChannelSplitter(2);
+    this.convL = ctx.createConvolver();
+    this.convR = ctx.createConvolver();
+    // Levels are set by measurement below, not by the node's own normalisation,
+    // so that A/B compares the sound rather than the volume.
+    this.convL.normalize = false;
+    this.convR.normalize = false;
+
+    this.roomTrim = ctx.createGain();
+    this.roomTrim.gain.value = 0;
+    this.wetGain = ctx.createGain();
+    this.wetGain.gain.value = 1;
+
+    this.master = ctx.createGain();
+    this.master.gain.value = 0.85;
+
+    this.limiter = ctx.createDynamicsCompressor();
+    this.limiter.threshold.value = -3;
+    this.limiter.knee.value = 0;
+    this.limiter.ratio.value = 20;
+    this.limiter.attack.value = 0.003;
+    this.limiter.release.value = 0.12;
+
+    this.analyser = ctx.createAnalyser();
+    this.analyser.fftSize = 1024;
+    this.analyser.smoothingTimeConstant = 0.6;
+
+    this.input.connect(this.dryGain);
+    this.input.connect(this.voicingIn);
+    this.stereoise.connect(this.splitter);
+    this.splitter.connect(this.convL, 0);
+    this.splitter.connect(this.convR, 1);
+    this.convL.connect(this.roomTrim);
+    this.convR.connect(this.roomTrim);
+    this.roomTrim.connect(this.wetGain);
+    this.wetGain.connect(this.master);
+    this.dryGain.connect(this.master);
+    this.master.connect(this.limiter);
+    this.limiter.connect(this.analyser);
+    this.analyser.connect(this.ctx.destination);
+
+    this.ready = true;
+  }
+
+  /* ---------------------------------------------------------------- sources */
+
+  disconnectSource() {
+    if (this.source) { try { this.source.disconnect(); } catch (_) {} }
+    if (this.stream) { this.stream.getTracks().forEach((t) => t.stop()); this.stream = null; }
+    if (this.mediaEl) {
+      this.mediaEl.pause();
+      URL.revokeObjectURL(this.mediaEl.src);
+      this.mediaEl.remove();
+      this.mediaEl = null;
+    }
+    this.source = null;
+  }
+
+  async useFile(file) {
+    await this.start();
+    this.disconnectSource();
+    const el = new Audio();
+    el.src = URL.createObjectURL(file);
+    el.preload = 'auto';
+    // Some mobile browsers refuse to decode a media element that was never
+    // attached to the document, so park it off-screen rather than detached.
+    el.style.cssText = 'position:fixed;left:-9999px;width:1px;height:1px';
+    document.body.appendChild(el);
+    this.mediaEl = el;
+    this.source = this.ctx.createMediaElementSource(el);
+    this.source.connect(this.input);
+    await new Promise((res, rej) => {
+      el.addEventListener('loadedmetadata', res, { once: true });
+      el.addEventListener('error', () => rej(new Error('That file could not be decoded.')), { once: true });
+    });
+    return el;
+  }
+
+  /** Desktop only: process whatever a browser tab or the system is playing. */
+  async useSystemAudio() {
+    await this.start();
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      throw new Error('This browser cannot capture other apps. Play a file instead.');
+    }
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+    });
+    if (stream.getAudioTracks().length === 0) {
+      stream.getTracks().forEach((t) => t.stop());
+      throw new Error('No audio came through. Pick a tab and tick "Also share tab audio".');
+    }
+    this.disconnectSource();
+    this.stream = stream;
+    this.source = this.ctx.createMediaStreamSource(stream);
+    this.source.connect(this.input);
+    return stream;
+  }
+
+  async useMicrophone() {
+    await this.start();
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+    });
+    this.disconnectSource();
+    this.stream = stream;
+    this.source = this.ctx.createMediaStreamSource(stream);
+    this.source.connect(this.input);
+    return stream;
+  }
+
+  /* ----------------------------------------------------------------- venue */
+
+  async loadVenue(venue, opts = {}) {
+    await this.start();
+    const { buffers, report } = await renderVenue(venue, { ...opts, sampleRate: this.ctx.sampleRate });
+    this.convL.buffer = buffers[0];
+    this.convR.buffer = buffers[1];
+    this.venue = venue;
+    this.sys = SYSTEMS[venue.system];
+    this.render = report;
+    this.rebuildVoicing();
+    await this.calibrate();
+    return report;
+  }
+
+  rebuildVoicing() {
+    if (!this.sys) return;
+    if (this.voicing) { try { this.voicing.input.disconnect(); this.voicing.output.disconnect(); } catch (_) {} }
+    try { this.voicingIn.disconnect(); } catch (_) {}
+    this.voicing = makeVoicing(this.ctx, this.sys, this.drive);
+    this.voicingIn.connect(this.voicing.input);
+    this.voicing.output.connect(this.stereoise);
+  }
+
+  /**
+   * Set the treated path to the same loudness as the bypassed one, by playing
+   * pink noise through an exact copy of the chain and measuring both with a
+   * broadcast loudness filter.
+   *
+   * This is measured rather than calculated because the honest answer depends
+   * on the spectrum of the material: a room with a long bass decay adds far
+   * more to a bass-heavy record than a flat energy sum would suggest.
+   */
+  async calibrate() {
+    if (!this.convL.buffer || !this.sys) return;
+    const sr = this.ctx.sampleRate;
+    const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OfflineCtx) return;
+
+    const irSec = Math.min(this.convL.buffer.length / sr, 6);
+    const noiseSec = irSec + 1.5;
+    const totalSec = noiseSec + Math.min(irSec, 2);
+    const len = Math.ceil(totalSec * sr);
+    const pink = pinkStereo(Math.ceil(noiseSec * sr));
+
+    const measure = async (treated) => {
+      const ctx = new OfflineCtx(2, len, sr);
+      const buf = ctx.createBuffer(2, pink[0].length, sr);
+      buf.copyToChannel(pink[0], 0);
+      buf.copyToChannel(pink[1], 1);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+
+      let tail = src;
+      if (treated) {
+        const v = makeVoicing(ctx, this.sys, this.drive);
+        src.connect(v.input);
+        const st = ctx.createGain();
+        st.channelCount = 2;
+        st.channelCountMode = 'explicit';
+        st.channelInterpretation = 'speakers';
+        v.output.connect(st);
+        const sp = ctx.createChannelSplitter(2);
+        st.connect(sp);
+        const cl = ctx.createConvolver(); cl.normalize = false; cl.buffer = this.convL.buffer;
+        const cr = ctx.createConvolver(); cr.normalize = false; cr.buffer = this.convR.buffer;
+        sp.connect(cl, 0);
+        sp.connect(cr, 1);
+        const sum = ctx.createGain();
+        cl.connect(sum); cr.connect(sum);
+        tail = sum;
+      }
+      attachLoudnessMeter(ctx, tail).connect(ctx.destination);
+      src.start(0);
+      // Measure only once the room has filled: before that the reverberant
+      // field is still building and the level would read low.
+      return rmsWindow(await ctx.startRendering(), irSec, noiseSec);
+    };
+
+    const [wet, dry] = await Promise.all([measure(true), measure(false)]);
+    const g = wet > 1e-9 ? dry / wet : 1;
+    const trim = clamp(g, 0.02, 64) * dbToGain(this.venue?.trimDb || 0);
+    this.roomTrim.gain.setTargetAtTime(trim, this.ctx.currentTime, RAMP);
+    if (this.render) this.render.trim = trim;
+    return trim;
+  }
+
+  /* -------------------------------------------------------------- controls */
+
+  /** How hard the system is being pushed. 0 = clean, 1 = the venue's own level. */
+  setDrive(amount) {
+    this.drive = clamp(amount, 0, 1.6);
+    if (!this.voicing) return;
+    this.voicing.shaper.curve = driveCurve((this.sys?.drive ?? 0) * this.drive);
+  }
+
+  setBypass(on) {
+    this.bypassed = on;
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    this.wetGain.gain.setTargetAtTime(on ? 0 : 1, now, 0.012);
+    this.dryGain.gain.setTargetAtTime(on ? 1 : 0, now, 0.012);
+  }
+
+  setVolume(v) {
+    if (!this.ctx) return;
+    this.master.gain.setTargetAtTime(clamp(v, 0, 1.4), this.ctx.currentTime, RAMP);
+  }
+
+  outputLevel() {
+    if (!this.analyser) return 0;
+    const buf = new Float32Array(this.analyser.fftSize);
+    this.analyser.getFloatTimeDomainData(buf);
+    let sum = 0;
+    for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+    return Math.sqrt(sum / buf.length);
+  }
+}
+
+/* ------------------------------------------------------------ room renders */
+
+const cache = new Map();
+
+/**
+ * Render a venue's pair of binaural responses. Independent of any live audio
+ * context, so the app can show a room's measurements before a note is played —
+ * and before iOS will let it open an output at all.
+ */
+async function renderVenue(venue, { seat = 0.35, quality = 1, sampleRate = 48000 } = {}) {
+  const key = `${venue.id}|${seat.toFixed(3)}|${quality}|${sampleRate}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const listener = lerpVec(venue.seat.near, venue.seat.far, clamp(seat, 0, 1));
+  const irSeconds = Math.max(0.25, venue.irSeconds * quality);
+  const started = now();
+
+  const reports = [];
+  for (let i = 0; i < venue.speakers.length; i++) {
+    const pos = venue.speakers[i];
+    const toListener = [listener[0] - pos[0], listener[1] - pos[1], listener[2] - pos[2]];
+    const n = Math.hypot(toListener[0], toListener[1], toListener[2]) || 1;
+    reports.push(await renderSpeakerBRIR({
+      dims: venue.dims,
+      materials: venue.materials,
+      listener,
+      yaw: 0,
+      source: pos,
+      aim: [toListener[0] / n, toListener[1] / n, toListener[2] / n],
+      spread: venue.spread ?? 1,
+      diffuse: venue.diffuse ?? 1,
+      rt60Override: venue.rt60Override ?? null,
+      diffuseRefDb: venue.diffuseRefDb ?? null,
+      sampleRate,
+      irSeconds,
+      seed: 0x5eed + i * 7717 + venue.id.length * 131,
+    }));
+  }
+
+  const buffers = reports.map((r) => r.buffer);
+  const out = {
+    buffers,
+    report: {
+      venue: venue.id,
+      seat,
+      rt60: reports[0].rt60,
+      tMix: reports[0].tMix,
+      t0: reports[0].t0,
+      reflections: reports[0].reflections,
+      order: reports[0].order,
+      irSeconds,
+      sampleRate,
+      distance: Math.hypot(
+        listener[0] - venue.speakers[0][0],
+        listener[1] - venue.speakers[0][1],
+        listener[2] - venue.speakers[0][2],
+      ),
+      buildMs: Math.round(now() - started),
+      decay: decayCurve(buffers[0]),
+    },
+  };
+  if (cache.size > 24) cache.delete(cache.keys().next().value);
+  cache.set(key, out);
+  return out;
+}
+
+const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+/**
+ * Energy-decay curve of an impulse response, in dB, downsampled for drawing.
+ * This is the reflectogram the app plots: the actual response it just built,
+ * not an illustration of one.
+ */
+function decayCurve(buffer, points = 400) {
+  const L = buffer.getChannelData(0);
+  const R = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : L;
+  const hop = Math.max(1, Math.floor(L.length / points));
+  const out = [];
+  let peak = 1e-12;
+  for (let i = 0; i + hop <= L.length; i += hop) {
+    let e = 0;
+    for (let j = i; j < i + hop; j++) e += L[j] * L[j] + R[j] * R[j];
+    const rms = Math.sqrt(e / (2 * hop));
+    if (rms > peak) peak = rms;
+    out.push(rms);
+  }
+  return {
+    db: out.map((v) => Math.max(-70, 20 * Math.log10(v / peak))),
+    seconds: buffer.length / buffer.sampleRate,
+  };
+}
+
+/* ===== src/app.js ===== */
+/**
+ * app.js — interface wiring.
+ *
+ * Everything the page shows about a room is measured from the response the app
+ * has just built: the decay curve is that impulse response, the band chart is
+ * its Eyring decay times, the arrival time is the real flight time from the
+ * loudspeaker to the seat. Nothing here is illustrative.
+ */
+
+
+
+
+
+const $ = (id) => document.getElementById(id);
+
+const stage = new SoundStage();
+const state = {
+  venue: venueById('living'),
+  seat: 0.35,
+  quality: 1,
+  drive: 1,
+  volume: 0.85,
+  bypass: false,
+  report: null,
+  playing: false,
+};
+
+/* ------------------------------------------------------------------ toast */
+
+let toastTimer;
+function say(message, ms = 3600) {
+  const el = $('status');
+  el.textContent = message;
+  el.dataset.show = 'true';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.dataset.show = 'false'; }, ms);
+}
+
+/* ------------------------------------------------------------- venue tiles */
+
+function midDecay(v) {
+  const rt = v.rt60Override || reverbTimes(v.dims, v.materials);
+  return (rt[2] + rt[3]) / 2;
+}
+
+function buildVenueTiles() {
+  const host = $('venues');
+  host.innerHTML = '';
+  for (const v of VENUES) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'venue';
+    b.setAttribute('aria-pressed', String(v.id === state.venue.id));
+    b.dataset.id = v.id;
+    const rt = midDecay(v);
+    b.innerHTML = `<h3>${v.name}</h3><span class="rt">${rt < 1 ? rt.toFixed(2) : rt.toFixed(1)} s decay</span>`;
+    b.addEventListener('click', () => selectVenue(v.id));
+    host.appendChild(b);
+  }
+}
+
+function buildBandAxis() {
+  $('band-axis').innerHTML = BAND_CENTRES
+    .map((f) => `<span>${f >= 1000 ? `${f / 1000}k` : f}</span>`)
+    .join('');
+}
+
+/* -------------------------------------------------------------- rendering */
+
+let renderToken = 0;
+let pending = null;
+
+async function refreshRoom() {
+  const token = ++renderToken;
+  $('plot').classList.add('busy');
+  const sampleRate = stage.ctx ? stage.ctx.sampleRate : 48000;
+
+  try {
+    const opts = { seat: state.seat, quality: state.quality };
+    let report;
+    if (stage.ready) {
+      report = await stage.loadVenue(state.venue, opts);
+    } else {
+      report = (await renderVenue(state.venue, { ...opts, sampleRate })).report;
+    }
+    if (token !== renderToken) return;
+    state.report = report;
+    paintRoom(report);
+  } catch (err) {
+    console.error(err);
+    say('The room could not be built on this device.');
+  } finally {
+    if (token === renderToken) $('plot').classList.remove('busy');
+  }
+}
+
+function scheduleRefresh(delay = 180) {
+  clearTimeout(pending);
+  pending = setTimeout(refreshRoom, delay);
+}
+
+function selectVenue(id) {
+  state.venue = venueById(id);
+  for (const el of document.querySelectorAll('.venue')) {
+    el.setAttribute('aria-pressed', String(el.dataset.id === id));
+  }
+  paintVenueText();
+  updateSeatLabel();
+  scheduleRefresh(0);
+}
+
+function paintVenueText() {
+  const v = state.venue;
+  $('room-name').textContent = v.name;
+  $('room-place').textContent = v.place;
+  $('room-note').textContent = v.note;
+}
+
+/* ------------------------------------------------------------- room paint */
+
+function paintRoom(report) {
+  const rtMid = (report.rt60[2] + report.rt60[3]) / 2;
+  $('r-rt').innerHTML = `${rtMid < 1 ? rtMid.toFixed(2) : rtMid.toFixed(1)}<small> s</small>`;
+  $('r-dist').innerHTML = `${report.distance.toFixed(report.distance < 10 ? 1 : 0)}<small> m</small>`;
+  $('r-t0').innerHTML = `${Math.round(report.t0 * 1000)}<small> ms</small>`;
+  $('r-refl').textContent = report.reflections.toLocaleString();
+
+  const max = Math.max(...report.rt60, 0.2);
+  $('bands').innerHTML = report.rt60.map((t) => {
+    const h = Math.max(2, Math.round((t / max) * 54));
+    return `<div class="band"><span class="v">${t < 1 ? t.toFixed(2) : t.toFixed(1)}</span><div class="bar" style="height:${h}px"></div></div>`;
+  }).join('');
+
+  drawDecay(report);
+}
+
+/* ---------------------------------------------------------- reflectogram */
+
+const canvas = $('decay');
+const cx = canvas.getContext('2d');
+
+function css(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function drawDecay(report) {
+  if (!report) return;
+  const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+  const w = canvas.clientWidth || 560;
+  const h = 130;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cx.clearRect(0, 0, w, h);
+
+  const padL = 26, padR = 4, padT = 6, padB = 16;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const { db, seconds } = report.decay;
+  const FLOOR = -70;
+
+  const x = (t) => padL + (t / seconds) * plotW;
+  const y = (d) => padT + (1 - (d - FLOOR) / -FLOOR) * plotH;
+
+  const ink = css('--ink-2') || '#888';
+  const muted = css('--muted') || '#888';
+  const line = css('--line-soft') || '#ddd';
+  const direct = css('--direct') || '#4fc8d9';
+  const tail = css('--tail') || '#e4703a';
+
+  // grid
+  cx.strokeStyle = line;
+  cx.lineWidth = 1;
+  cx.font = "9px 'IBM Plex Mono', monospace";
+  cx.fillStyle = muted;
+  cx.textAlign = 'right';
+  for (const d of [0, -20, -40, -60]) {
+    const yy = Math.round(y(d)) + 0.5;
+    cx.beginPath(); cx.moveTo(padL, yy); cx.lineTo(w - padR, yy); cx.stroke();
+    cx.fillText(`${d}`, padL - 5, yy + 3);
+  }
+
+  // time ticks
+  cx.textAlign = 'center';
+  const step = seconds > 3 ? 1 : seconds > 1.2 ? 0.5 : seconds > 0.5 ? 0.2 : 0.1;
+  for (let t = step; t < seconds; t += step) {
+    cx.fillText(`${t < 1 ? t.toFixed(1) : t}s`, x(t), h - 4);
+  }
+
+  // The handover from traced reflections to the diffuse tail — the same split
+  // the synthesis uses, so the two colours mean exactly what the legend says.
+  const tSplit = Math.min(seconds, report.t0 + report.tMix);
+  const n = db.length;
+  const pt = (i) => [x((i / n) * seconds), y(db[i])];
+
+  const drawSeg = (from, to, colour) => {
+    if (to <= from) return;
+    cx.beginPath();
+    cx.moveTo(...pt(from));
+    for (let i = from + 1; i <= to && i < n; i++) cx.lineTo(...pt(i));
+    const last = Math.min(to, n - 1);
+    cx.lineTo(x((last / n) * seconds), y(FLOOR));
+    cx.lineTo(x((from / n) * seconds), y(FLOOR));
+    cx.closePath();
+    cx.fillStyle = colour;
+    cx.globalAlpha = 0.18;
+    cx.fill();
+    cx.globalAlpha = 1;
+    cx.beginPath();
+    cx.moveTo(...pt(from));
+    for (let i = from + 1; i <= to && i < n; i++) cx.lineTo(...pt(i));
+    cx.strokeStyle = colour;
+    cx.lineWidth = 1.4;
+    cx.stroke();
+  };
+
+  // In a big room the traced reflections occupy a sliver of the time axis.
+  // Tint the region rather than distorting the scale, so the split stays
+  // legible without lying about how brief it is.
+  const iSplit = Math.round((tSplit / seconds) * n);
+  cx.fillStyle = direct;
+  cx.globalAlpha = 0.07;
+  cx.fillRect(padL, padT, Math.max(2, x(tSplit) - padL), plotH);
+  cx.globalAlpha = 1;
+
+  drawSeg(0, iSplit, direct);
+  drawSeg(Math.max(0, iSplit - 1), n - 1, tail);
+
+  const xs = Math.round(x(tSplit)) + 0.5;
+  cx.strokeStyle = direct;
+  cx.globalAlpha = 0.55;
+  cx.beginPath(); cx.moveTo(xs, padT); cx.lineTo(xs, padT + plotH); cx.stroke();
+  cx.globalAlpha = 1;
+
+  // direct-sound arrival
+  if (report.t0 * 1000 > 8) {
+    const xx = Math.round(x(report.t0)) + 0.5;
+    cx.setLineDash([2, 3]);
+    cx.strokeStyle = direct;
+    cx.beginPath(); cx.moveTo(xx, padT); cx.lineTo(xx, padT + plotH); cx.stroke();
+    cx.setLineDash([]);
+    cx.fillStyle = ink;
+    cx.textAlign = xx > w * 0.7 ? 'right' : 'left';
+    cx.fillText('direct', xx + (xx > w * 0.7 ? -4 : 4), padT + 9);
+  }
+
+  cx.fillStyle = muted;
+  cx.textAlign = 'right';
+  cx.fillText('dB', padL - 5, padT + 3);
+}
+
+/* -------------------------------------------------------------- controls */
+
+function seatDistance() {
+  const v = state.venue;
+  const l = lerpVec(v.seat.near, v.seat.far, state.seat);
+  const s = v.speakers[0];
+  return Math.hypot(l[0] - s[0], l[1] - s[1], l[2] - s[2]);
+}
+
+function updateSeatLabel() {
+  const d = seatDistance();
+  $('seat-val').textContent = `${d < 10 ? d.toFixed(1) : Math.round(d)} m out`;
+}
+
+$('seat').addEventListener('input', (e) => {
+  state.seat = Number(e.target.value) / 100;
+  updateSeatLabel();
+  scheduleRefresh(220);
+});
+
+let calibrateTimer;
+$('drive').addEventListener('input', (e) => {
+  state.drive = Number(e.target.value) / 100;
+  $('drive-val').textContent = `${e.target.value} %`;
+  if (!stage.ready) return;
+  stage.setDrive(state.drive);
+  // Driving the system harder changes its loudness, so re-match the bypass
+  // level once the slider settles.
+  clearTimeout(calibrateTimer);
+  calibrateTimer = setTimeout(() => stage.calibrate(), 300);
+});
+
+$('vol').addEventListener('input', (e) => {
+  state.volume = Number(e.target.value) / 100;
+  $('vol-val').textContent = `${e.target.value} %`;
+  if (stage.ready) stage.setVolume(state.volume);
+});
+
+$('quality').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-q]');
+  if (!btn) return;
+  state.quality = Number(btn.dataset.q);
+  for (const b of $('quality').querySelectorAll('button')) {
+    b.setAttribute('aria-pressed', String(b === btn));
+  }
+  scheduleRefresh(0);
+});
+
+/* ------------------------------------------------------------------- A/B */
+
+const ab = $('ab');
+function setBypass(on) {
+  if (!stage.ready) return;
+  state.bypass = on;
+  stage.setBypass(on);
+  ab.dataset.on = String(on);
+  ab.textContent = on ? 'Raw file — no room' : 'Hold to hear it dry';
+}
+ab.addEventListener('pointerdown', (e) => { e.preventDefault(); setBypass(true); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) =>
+  ab.addEventListener(ev, () => setBypass(false)));
+ab.addEventListener('keydown', (e) => {
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setBypass(true); }
+});
+ab.addEventListener('keyup', (e) => {
+  if (e.key === ' ' || e.key === 'Enter') setBypass(false);
+});
+
+/* ---------------------------------------------------------------- sources */
+
+async function afterSourceReady(kind, name) {
+  ab.disabled = false;
+  $('now').hidden = false;
+  $('now-kind').textContent = kind;
+  $('now-name').textContent = name;
+  $('transport').style.display = stage.mediaEl ? '' : 'none';
+  stage.setDrive(state.drive);
+  stage.setVolume(state.volume);
+  stage.setBypass(state.bypass);
+  await refreshRoom();
+  meterLoop();
+}
+
+$('pick-file').addEventListener('click', () => $('file-input').click());
+
+$('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    say('Reading the file…', 1500);
+    const el = await stage.useFile(file);
+    wireTransport(el);
+    await afterSourceReady('File', file.name);
+    await el.play();
+    setPlaying(true);
+  } catch (err) {
+    console.error(err);
+    say(err.message || 'That file could not be played.');
+  }
+});
+
+$('pick-capture').addEventListener('click', async () => {
+  try {
+    await stage.useSystemAudio();
+    await afterSourceReady('Captured', 'Shared tab or screen');
+    say('Anything that tab plays now goes through the room.');
+  } catch (err) {
+    console.error(err);
+    if (err.name !== 'NotAllowedError') say(err.message || 'Capture is not available here.');
+  }
+});
+
+$('pick-mic').addEventListener('click', async () => {
+  try {
+    await stage.useMicrophone();
+    await afterSourceReady('Live', 'Microphone or line input');
+    say('Live input is running. Keep the volume sensible.');
+  } catch (err) {
+    console.error(err);
+    if (err.name !== 'NotAllowedError') say('No input device was available.');
+  }
+});
+
+/* ------------------------------------------------------------- transport */
+
+const PLAY_PATH = 'M3 1.5 14 8 3 14.5z';
+const PAUSE_PATH = 'M3 2h3.6v12H3zM9.4 2H13v12H9.4z';
+
+function setPlaying(on) {
+  state.playing = on;
+  $('play-icon').firstElementChild?.setAttribute('d', on ? PAUSE_PATH : PLAY_PATH);
+  $('play').setAttribute('aria-label', on ? 'Pause' : 'Play');
+  if (on) meterLoop();
+}
+
+function fmt(t) {
+  if (!isFinite(t)) return '0:00';
+  const m = Math.floor(t / 60);
+  return `${m}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+}
+
+let scrubbing = false;
+
+function wireTransport(el) {
+  $('play').onclick = async () => {
+    if (el.paused) { await stage.start(); await el.play(); setPlaying(true); }
+    else { el.pause(); setPlaying(false); }
+  };
+  el.addEventListener('timeupdate', () => {
+    if (scrubbing || !el.duration) return;
+    $('scrub').value = String(Math.round((el.currentTime / el.duration) * 1000));
+    $('time').textContent = `${fmt(el.currentTime)} / ${fmt(el.duration)}`;
+  });
+  el.addEventListener('ended', () => setPlaying(false));
+  el.addEventListener('pause', () => setPlaying(false));
+  el.addEventListener('play', () => setPlaying(true));
+  $('scrub').oninput = () => { scrubbing = true; };
+  $('scrub').onchange = (e) => {
+    scrubbing = false;
+    if (el.duration) el.currentTime = (Number(e.target.value) / 1000) * el.duration;
+  };
+}
+
+/* ---------------------------------------------------------------- metering */
+
+let metering = false;
+function meterLoop() {
+  if (metering) return;
+  metering = true;
+  const fill = $('meter');
+  const tick = () => {
+    if (!stage.ready) { metering = false; return; }
+    const rms = stage.outputLevel();
+    const db = 20 * Math.log10(Math.max(rms, 1e-5));
+    const pct = clamp((db + 54) / 54, 0, 1) * 100;
+    fill.style.height = `${pct.toFixed(1)}%`;
+    fill.style.background = db > -2 ? css('--tail') : css('--direct');
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+/* -------------------------------------------------------------------- boot */
+
+function boot() {
+  buildVenueTiles();
+  buildBandAxis();
+  paintVenueText();
+  updateSeatLabel();
+  $('transport').style.display = 'none';
+  refreshRoom();
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => drawDecay(state.report), 120);
+  });
+  window.matchMedia('(prefers-color-scheme: dark)')
+    .addEventListener('change', () => drawDecay(state.report));
+
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+
+document.fonts?.ready.then(() => drawDecay(state.report)).catch(() => {});
+boot();
+
+// Handy from a console, and what the test harness drives.
+window.soundStage = stage;
+window.soundStageState = state;
+
+</script>

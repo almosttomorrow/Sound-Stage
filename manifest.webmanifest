@@ -1,0 +1,14 @@
+{
+  "name": "Sound Stage",
+  "short_name": "Sound Stage",
+  "description": "Hear a track as if it were playing through a system in a church, a stadium or a good living room.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f12",
+  "theme_color": "#0b0f12",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sound Stage</title>
+<meta name="description" content="Hear a track as if it were playing through a system in a church, a stadium or a good living room — physically modelled, on headphones.">
+<meta name="theme-color" content="#0b0f12">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1 class="wordmark">Sound<span>&nbsp;Stage</span></h1>
+    <p class="tagline">Play a track through a loudspeaker system, in a room, and listen to it on headphones.</p>
+  </header>
+
+  <section id="source">
+    <div class="sec-head"><span class="step mono">01</span><p class="eyebrow">Source</p></div>
+    <div class="btn-row">
+      <button class="btn primary" id="pick-file">Choose an audio file</button>
+      <button class="btn" id="pick-capture">Capture tab audio</button>
+      <button class="btn" id="pick-mic">Live input</button>
+    </div>
+    <input type="file" id="file-input" accept="audio/*" hidden>
+
+    <div class="now" id="now" hidden>
+      <div class="now-title">
+        <span class="eyebrow" id="now-kind">File</span>
+        <strong id="now-name">—</strong>
+      </div>
+      <div class="transport" id="transport">
+        <button class="play" id="play" aria-label="Play">
+          <svg id="play-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.5 14 8 3 14.5z"/></svg>
+        </button>
+        <input type="range" class="scrub" id="scrub" min="0" max="1000" value="0" step="1" aria-label="Seek">
+        <span class="time mono" id="time">0:00</span>
+      </div>
+    </div>
+
+    <p class="hint" id="source-hint">
+      Streaming apps keep their audio to themselves — no app on a phone can reach inside Spotify or Apple Music.
+      Play a file here instead, or on a computer share a browser tab and process what it is playing.
+    </p>
+  </section>
+
+  <section id="venue-section">
+    <div class="sec-head"><span class="step mono">02</span><p class="eyebrow">Room</p></div>
+    <div class="venues" id="venues" role="group" aria-label="Choose a room"></div>
+  </section>
+
+  <section id="room">
+    <div class="room-head">
+      <h2 id="room-name">Living Room</h2>
+      <span class="place mono" id="room-place">Carpeted lounge, 7.5 × 5.0 m</span>
+      <p class="note" id="room-note">Two good bookshelf speakers, a sofa behind you, a window down one side.</p>
+    </div>
+
+    <div class="plot" id="plot">
+      <canvas id="decay" width="1200" height="320" role="img"
+              aria-label="Energy decay of the room response over time"></canvas>
+      <div class="plot-legend">
+        <span><i style="background:var(--direct)"></i>Direct &amp; early reflections</span>
+        <span><i style="background:var(--tail)"></i>Reverberant tail</span>
+      </div>
+    </div>
+
+    <dl class="readouts">
+      <div class="readout"><dt>Decay to −60 dB</dt><dd id="r-rt">—<small> s</small></dd></div>
+      <div class="readout"><dt>Speaker distance</dt><dd id="r-dist">—<small> m</small></dd></div>
+      <div class="readout"><dt>Sound arrives in</dt><dd id="r-t0">—<small> ms</small></dd></div>
+      <div class="readout"><dt>Reflections traced</dt><dd id="r-refl">—</dd></div>
+    </dl>
+
+    <div class="bands">
+      <p class="eyebrow" style="margin-bottom:8px">Decay time by octave band, seconds</p>
+      <div class="bands-grid" id="bands"></div>
+      <div class="band-axis" id="band-axis"></div>
+    </div>
+  </section>
+
+  <section id="controls-section">
+    <div class="sec-head"><span class="step mono">03</span><p class="eyebrow">Your seat &amp; the system</p></div>
+    <div class="controls">
+      <div class="ctl">
+        <div class="ctl-top"><label for="seat">Where you are standing</label><span class="val mono" id="seat-val">2.6 m out</span></div>
+        <input type="range" id="seat" min="0" max="100" value="35">
+        <div class="ctl-ends"><span>Close to the speakers</span><span>Back of the room</span></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-top"><label for="drive">How hard the system is pushed</label><span class="val mono" id="drive-val">100 %</span></div>
+        <input type="range" id="drive" min="0" max="160" value="100">
+        <div class="ctl-ends"><span>Clean</span><span>Wide open</span></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-top"><label for="vol">Volume</label><span class="val mono" id="vol-val">85 %</span></div>
+        <input type="range" id="vol" min="0" max="120" value="85">
+        <div class="ctl-ends"><span>Quiet</span><span>Loud</span></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-top"><label id="q-label">Response length</label></div>
+        <div class="seg" role="group" aria-labelledby="q-label" id="quality">
+          <button type="button" data-q="0.55" aria-pressed="false">Light</button>
+          <button type="button" data-q="1" aria-pressed="true">Full</button>
+        </div>
+        <p class="ctl-note" id="q-note">Full length uses the whole measured decay. Light halves it, which builds a room about twice as fast on a slower phone.</p>
+      </div>
+    </div>
+
+    <details class="notes">
+      <summary>What this is actually doing, and why Spotify can't be piped through it</summary>
+      <p><strong>The model.</strong> Each room is a real shoebox in metres with real surface materials. The app traces
+        the direct sound and every early reflection off those surfaces with an image-source model, in seven octave
+        bands, then continues the decay with a diffuse tail whose reverberation time comes out of the Eyring equation
+        for that room. Each reflection is placed at both of your ears separately, with the timing and the
+        frequency-dependent shadowing a head of that size would cause. That is what makes the room appear outside your
+        head rather than between your ears. The loudspeaker voicing is applied <em>before</em> the room, in the order
+        reality does it.</p>
+      <p><strong>The source.</strong> Nothing running on a phone can read the audio coming out of another app.
+        On iOS there is no system-audio capture at all, and the streaming services encrypt their playback on every
+        platform. So this app has to be the player. Files work everywhere; on a desktop browser you can also share a
+        tab and process whatever it is playing, as long as that tab is not using DRM.</p>
+      <p><strong>Headphones, please.</strong> The whole point is that you supply the ears. Played on speakers you
+        would be listening to a room inside a room.</p>
+    </details>
+  </section>
+</div>
+
+<div class="ab-bar">
+  <div class="ab-inner">
+    <button class="ab" id="ab" data-on="false" disabled>Hold to hear it dry</button>
+    <div class="meter" aria-hidden="true">
+      <div class="meter-track"><div class="meter-fill" id="meter"></div></div>
+      <span>OUT</span>
+    </div>
+  </div>
+</div>
+
+<div class="status" id="status" role="status" aria-live="polite"></div>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
