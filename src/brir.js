@@ -155,7 +155,7 @@ function directivityGains(cosBeta, spread, out) {
  * Returns the number of reflections actually placed.
  */
 function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
-  const { dims, listener, yaw, source, aim, spread, beta, scat, tMix, irSeconds, t0 } = cfg;
+  const { dims, listener, yaw, source, aim, spread, beta, scat, tMix, irSeconds, t0, leadTrim } = cfg;
   const [Lx, Ly, Lz] = dims;
 
   const fwdVec = [Math.cos(yaw), Math.sin(yaw), 0];
@@ -175,7 +175,7 @@ function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
   // from zero: across a stadium the direct sound does not turn up for a third
   // of a second, and the tail must not start before it.
   const tFade = t0 + tMix;
-  const tEnd = Math.min(irSeconds, tFade + 0.5 * tMix);
+  const tEnd = Math.min(irSeconds + leadTrim, tFade + 0.5 * tMix);
   let placed = 0;
 
   for (let ux = 0; ux <= 1; ux++) {
@@ -237,8 +237,12 @@ function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
               const aimImg = [sx * aim[0], sy * aim[1], sz * aim[2]];
               directivityGains(-dot(aimImg, dirUnit), spread, dirG);
 
-              const tL = ((d + earPathOffset(thetaL)) / C_AIR) * sampleRate;
-              const tR = ((d + earPathOffset(thetaR)) / C_AIR) * sampleRate;
+              // Sample positions are measured from the moment the sound first
+              // reaches the listener, not from when it left the speaker: the
+              // flight time is real but there is no reason to make anyone wait
+              // through it before the music starts.
+              const tL = ((d + earPathOffset(thetaL)) / C_AIR - leadTrim) * sampleRate;
+              const tR = ((d + earPathOffset(thetaR)) / C_AIR - leadTrim) * sampleRate;
 
               const spread1r = fade / Math.max(d, 0.35);
               const counts = [nX0, nX1, nY0, nY1, nZ0, nZ1];
@@ -275,13 +279,15 @@ function diffuseCoherence(f) {
 }
 
 function renderLateTail(cfg, bandBuf, sampleRate, rnd) {
-  const { rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb } = cfg;
+  const { rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb, leadTrim } = cfg;
   if (diffuse <= 0) return;
   const len = bandBuf[0][0].length;
 
-  const iFadeStart = Math.floor((t0 + 0.5 * tMix) * sampleRate);
-  const iFadeEnd = Math.floor((t0 + tMix) * sampleRate);
-  const iMeasureFrom = Math.floor((t0 + 0.55 * tMix) * sampleRate);
+  // Sample index of a physical time, allowing for the trimmed flight time.
+  const idx = (t) => Math.floor((t - leadTrim) * sampleRate);
+  const iFadeStart = idx(t0 + 0.5 * tMix);
+  const iFadeEnd = idx(t0 + tMix);
+  const iMeasureFrom = idx(t0 + 0.55 * tMix);
   const fadeSpan = Math.max(1, iFadeEnd - iFadeStart);
 
   const tailL = new Float32Array(len);
@@ -299,7 +305,7 @@ function renderLateTail(cfg, bandBuf, sampleRate, rnd) {
 
     let last = iFadeStart;
     for (let i = Math.max(0, iFadeStart); i < len; i++) {
-      const env = Math.pow(10, (-3 * (i / sampleRate - t0 - 0.5 * tMix)) / T);
+      const env = Math.pow(10, (-3 * (i / sampleRate + leadTrim - t0 - 0.5 * tMix)) / T);
       if (env < 1e-6) break;
       const u = (i - iFadeStart) / fadeSpan;
       const fade = u >= 1 ? 1 : 0.5 * (1 - Math.cos(Math.PI * u));
@@ -331,7 +337,7 @@ function renderLateTail(cfg, bandBuf, sampleRate, rnd) {
     if (eIsmL < floorE && eIsmR < floorE && diffuseRefDb != null) {
       const ref = Math.pow(10, diffuseRefDb / 10);
       let dL = 0, dR = 0, dn = 0;
-      const from = Math.max(0, Math.floor(t0 * sampleRate) - 4);
+      const from = Math.max(0, idx(t0) - 4);
       const to = Math.min(len, from + Math.ceil(0.03 * sampleRate));
       for (let i = from; i < to; i++) { dL += bandBuf[b][0][i] ** 2; dR += bandBuf[b][1][i] ** 2; dn++; }
       if (dn > 0) { eIsmL = (dL / dn) * ref * n; eIsmR = (dR / dn) * ref * n; }
@@ -401,7 +407,7 @@ export async function renderSpeakerBRIR(opts) {
   const {
     dims, materials, listener, yaw, source, aim,
     spread = 1, sampleRate, irSeconds, seed = 1,
-    diffuse = 1, rt60Override = null, diffuseRefDb = null,
+    diffuse = 1, rt60Override = null, diffuseRefDb = null, leadTrim = 0,
   } = opts;
 
   const rnd = mulberry32(seed);
@@ -422,14 +428,18 @@ export async function renderSpeakerBRIR(opts) {
     dims, listener, yaw, source, aim, spread,
     beta: reflectionCoefficients(materials),
     scat: scatterCoefficients(materials),
-    rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb,
+    rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb, leadTrim,
   };
 
   const ism = renderImageSources(cfg, bandBuf, sampleRate, rnd);
   renderLateTail(cfg, bandBuf, sampleRate, rnd);
   const rendered = await collapseBands(bandBuf, sampleRate, len);
 
-  return { buffer: rendered, rt60, tMix, t0, reflections: ism.placed, order: ism.order };
+  return {
+    buffer: rendered, rt60, tMix, t0,
+    onset: t0 - leadTrim,
+    reflections: ism.placed, order: ism.order,
+  };
 }
 
 export { MATERIALS, SURFACES, BAND_CENTRES };

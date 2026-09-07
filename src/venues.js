@@ -50,10 +50,15 @@ export const SYSTEMS = {
     drive: 0.035,
   },
   columnPA: {
-    name: 'Steerable column array, time-aligned',
-    hp: [48, 0.8], lp: [17500, 0.7],
-    bands: [[90, 1.0, 1.8], [400, 1.1, -2.6], [2200, 0.9, 1.8], [7000, 0.8, 1.0, 'highshelf']],
-    drive: 0.02,
+    // The best system a church can have. A digitally steered column throws a
+    // tight vertical beam down the nave and barely touches the walls, so the
+    // music stays defined while the room still blooms behind it. Subs are the
+    // other half: a stone nave supports low end like nothing else, and a
+    // system that stops at 90 Hz throws that away.
+    name: 'Steered column array with subs',
+    hp: [38, 0.75], lp: [18500, 0.7],
+    bands: [[55, 1.0, 2.4], [315, 1.1, -2.8], [2500, 0.9, 2.0], [8000, 0.7, 1.8, 'highshelf']],
+    drive: 0.015,
   },
   hallRig: {
     name: 'Discreet reinforcement',
@@ -85,7 +90,7 @@ export const VENUES = [
   {
     id: 'studio',
     name: 'Control Room',
-    place: 'Treated studio, 6.5 × 4.8 m',
+    place: 'Treated control room',
     note: 'The reference. Almost no room — this is roughly what the mix engineer heard.',
     system: 'monitors',
     dims: [6.5, 4.8, 3.0],
@@ -93,12 +98,12 @@ export const VENUES = [
     listener: [3.0, 2.4, 1.2],
     spot: 'In the sweet spot, 1.6 m back',
     speakers: [[4.5, 3.05, 1.25], [4.5, 1.75, 1.25]],
-    spread: 1.0, irSeconds: 0.6, trimDb: 0,
+    spread: 1.0, irSeconds: 0.5, trimDb: 0,
   },
   {
     id: 'living',
     name: 'Living Room',
-    place: 'Carpeted lounge, 7.5 × 5.0 m',
+    place: 'Carpeted lounge, 7.5 × 5 m',
     note: 'Speakers placed properly, a rug, shelves down one wall. What a room like this does when someone has bothered.',
     system: 'bookshelf',
     dims: [7.5, 5.0, 2.7],
@@ -106,12 +111,12 @@ export const VENUES = [
     listener: [2.9, 2.5, 1.15],
     spot: 'On the sofa, 3.2 m back',
     speakers: [[5.9, 3.7, 1.05], [5.9, 1.3, 1.05]],
-    spread: 1.0, irSeconds: 0.9, trimDb: 0,
+    spread: 1.0, irSeconds: 0.7, trimDb: 0,
   },
   {
     id: 'jazz',
     name: 'Jazz Club',
-    place: 'Brick basement, 12 × 9 m',
+    place: 'Brick basement, low ceiling',
     note: 'Bare brick and a low ceiling, with a small, properly rung PA barely two tables away.',
     system: 'clubPA',
     dims: [12, 9, 3.2],
@@ -119,12 +124,12 @@ export const VENUES = [
     listener: [6.2, 4.5, 1.15],
     spot: 'Two tables back, 4.5 m from the stack',
     speakers: [[10.2, 6.3, 2.05], [10.2, 2.7, 2.05]],
-    spread: 1.3, irSeconds: 1.0, trimDb: 0,
+    spread: 1.3, irSeconds: 0.9, trimDb: 0,
   },
   {
     id: 'hall',
     name: 'Concert Hall',
-    place: 'Shoebox hall, 45 × 22 × 17 m',
+    place: 'Shoebox hall, 17 m to the ceiling',
     note: 'Plaster and wood, a full house, the long even decay these rooms are built for.',
     system: 'hallRig',
     dims: [45, 22, 17],
@@ -137,20 +142,22 @@ export const VENUES = [
   {
     id: 'church',
     name: 'Stone Church',
-    place: 'Stone nave, 30 × 14 × 15 m',
-    note: 'Stained glass, a hard floor, nearly five seconds of tail — and an array aimed tightly enough that the music stays defined inside it.',
+    place: 'Stone nave, 15 m to the vault',
+    note: 'Four seconds of tail that gets warmer as it falls, and a beam tight enough that the music stays defined inside it.',
     system: 'columnPA',
     dims: [30, 14, 15],
-    materials: { xMin: 'woodPanel', xMax: 'stone', yMin: 'glass', yMax: 'plaster', floor: 'naveFloor', ceiling: 'plaster' },
-    listener: [15, 7, 1.3],
-    spot: 'Halfway down the nave, 12 m back',
+    materials: { xMin: 'woodPanel', xMax: 'stone', yMin: 'stainedGlass', yMax: 'plaster', floor: 'naveSeating', ceiling: 'plaster' },
+    listener: [17, 7, 1.3],
+    spot: 'Ten rows back, 10 m from the array',
     speakers: [[26.5, 9.6, 4.2], [26.5, 4.4, 4.2]],
-    spread: 1.45, irSeconds: 5.0, trimDb: 0,
+    // A steered array is far more directional than a plain column, which is
+    // exactly what buys the clarity in a room this live.
+    spread: 2.2, irSeconds: 4.9, trimDb: 0,
   },
   {
     id: 'club',
     name: 'Nightclub',
-    place: 'Concrete room, 24 × 16 m',
+    place: 'Concrete room, treated ceiling',
     note: 'Horn-loaded subs, a treated ceiling, a floor full of people. Tight enough that the kick lands, still big enough to feel.',
     system: 'soundSystem',
     dims: [24, 16, 5.5],
@@ -158,7 +165,7 @@ export const VENUES = [
     listener: [13, 8, 1.6],
     spot: 'Out on the floor, 9 m from the stacks',
     speakers: [[21.5, 11.6, 2.6], [21.5, 4.4, 2.6]],
-    spread: 1.6, irSeconds: 2.2, trimDb: 0,
+    spread: 1.6, irSeconds: 2.0, trimDb: 0,
   },
   {
     id: 'stadium',
@@ -171,7 +178,7 @@ export const VENUES = [
     listener: [95, 70, 2],
     spot: 'Middle of the bowl, 67 m from the arrays',
     speakers: [[150, 100, 27], [150, 40, 27]],
-    spread: 2.1, irSeconds: 3.0, trimDb: 0,
+    spread: 2.1, irSeconds: 2.7, trimDb: 0,
     airComp: true,
   },
   {
@@ -185,7 +192,7 @@ export const VENUES = [
     listener: [160, 150, 1.65],
     spot: 'In the crowd, 74 m from the stage',
     speakers: [[232, 166, 8.5], [232, 134, 8.5]],
-    spread: 2.1, irSeconds: 1.3, trimDb: 0,
+    spread: 2.1, irSeconds: 1.0, trimDb: 0,
     airComp: true,
     // No walls means no reverberant field. What little decay there is comes off
     // the crowd and the distant site structures, so it is stated rather than
@@ -197,7 +204,7 @@ export const VENUES = [
   {
     id: 'car',
     name: 'Car',
-    place: 'Saloon cabin, 2.4 × 1.6 m',
+    place: 'Saloon cabin',
     note: 'Door speakers a foot from one ear and three from the other, time-aligned as far as anyone can in a car. Nothing is centred.',
     system: 'carDoors',
     dims: [2.4, 1.6, 1.15],
@@ -205,7 +212,7 @@ export const VENUES = [
     listener: [0.85, 0.48, 0.82],
     spot: "Driver's seat — nothing is centred",
     speakers: [[1.62, 1.46, 0.32], [1.62, 0.14, 0.32]],
-    spread: 1.1, irSeconds: 0.3, trimDb: 0,
+    spread: 1.1, irSeconds: 0.25, trimDb: 0,
   },
 ];
 

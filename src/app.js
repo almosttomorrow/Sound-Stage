@@ -7,9 +7,9 @@
  * loudspeaker to the seat. Nothing here is illustrative.
  */
 
-import { VENUES, venueById } from './venues.js';
+import { VENUES, venueById, SYSTEMS } from './venues.js';
 import { SoundStage, renderVenue } from './engine.js';
-import { reverbTimes, BAND_CENTRES, clamp } from './acoustics.js';
+import { reverbTimes, clamp } from './acoustics.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -55,12 +55,6 @@ function buildVenueTiles() {
     b.addEventListener('click', () => selectVenue(v.id));
     host.appendChild(b);
   }
-}
-
-function buildBandAxis() {
-  $('band-axis').innerHTML = BAND_CENTRES
-    .map((f) => `<span>${f >= 1000 ? `${f / 1000}k` : f}</span>`)
-    .join('');
 }
 
 /* -------------------------------------------------------------- rendering */
@@ -112,6 +106,7 @@ function paintVenueText() {
   $('room-place').textContent = v.place;
   $('room-note').textContent = v.note;
   $('room-spot').textContent = v.spot;
+  $('r-sys').textContent = SYSTEMS[v.system].name;
 }
 
 /* ------------------------------------------------------------- room paint */
@@ -119,15 +114,14 @@ function paintVenueText() {
 function paintRoom(report) {
   const rtMid = (report.rt60[2] + report.rt60[3]) / 2;
   $('r-rt').innerHTML = `${rtMid < 1 ? rtMid.toFixed(2) : rtMid.toFixed(1)}<small> s</small>`;
-  $('r-dist').innerHTML = `${report.distance.toFixed(report.distance < 10 ? 1 : 0)}<small> m</small>`;
-  $('r-t0').innerHTML = `${Math.round(report.t0 * 1000)}<small> ms</small>`;
-  $('r-refl').textContent = report.reflections.toLocaleString();
 
-  const max = Math.max(...report.rt60, 0.2);
-  $('bands').innerHTML = report.rt60.map((t) => {
-    const h = Math.max(2, Math.round((t / max) * 54));
-    return `<div class="band"><span class="v">${t < 1 ? t.toFixed(2) : t.toFixed(1)}</span><div class="bar" style="height:${h}px"></div></div>`;
-  }).join('');
+  // One thing worth knowing about every room, taken from its own numbers:
+  // low frequencies almost always outlast high ones, and by how much is most
+  // of what separates a warm room from a bright one.
+  const ratio = report.rt60[0] / Math.max(report.rt60[6], 0.01);
+  $('lesson').innerHTML = ratio >= 1.2
+    ? `Low notes hang on <b>${ratio.toFixed(1)}×</b> longer here than the top end.`
+    : 'The decay is even right across the spectrum here.';
 
   drawDecay(report);
 }
@@ -160,7 +154,6 @@ function drawDecay(report) {
   const x = (t) => padL + (t / seconds) * plotW;
   const y = (d) => padT + (1 - (d - FLOOR) / -FLOOR) * plotH;
 
-  const ink = css('--ink-2') || '#888';
   const muted = css('--muted') || '#888';
   const line = css('--line-soft') || '#ddd';
   const direct = css('--direct') || '#4fc8d9';
@@ -187,7 +180,7 @@ function drawDecay(report) {
 
   // The handover from traced reflections to the diffuse tail — the same split
   // the synthesis uses, so the two colours mean exactly what the legend says.
-  const tSplit = Math.min(seconds, report.t0 + report.tMix);
+  const tSplit = Math.min(seconds, report.onset + report.tMix);
   const n = db.length;
   const pt = (i) => [x((i / n) * seconds), y(db[i])];
 
@@ -229,18 +222,6 @@ function drawDecay(report) {
   cx.globalAlpha = 0.55;
   cx.beginPath(); cx.moveTo(xs, padT); cx.lineTo(xs, padT + plotH); cx.stroke();
   cx.globalAlpha = 1;
-
-  // direct-sound arrival
-  if (report.t0 * 1000 > 8) {
-    const xx = Math.round(x(report.t0)) + 0.5;
-    cx.setLineDash([2, 3]);
-    cx.strokeStyle = direct;
-    cx.beginPath(); cx.moveTo(xx, padT); cx.lineTo(xx, padT + plotH); cx.stroke();
-    cx.setLineDash([]);
-    cx.fillStyle = ink;
-    cx.textAlign = xx > w * 0.7 ? 'right' : 'left';
-    cx.fillText('direct', xx + (xx > w * 0.7 ? -4 : 4), padT + 9);
-  }
 
   cx.fillStyle = muted;
   cx.textAlign = 'right';
@@ -402,7 +383,6 @@ function meterLoop() {
 
 function boot() {
   buildVenueTiles();
-  buildBandAxis();
   paintVenueText();
   $('transport').style.display = 'none';
   refreshRoom();

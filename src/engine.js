@@ -19,7 +19,7 @@
 
 import { renderSpeakerBRIR } from './brir.js';
 import { SYSTEMS } from './venues.js';
-import { clamp, dbToGain, AIR_ABSORPTION_DB_M } from './acoustics.js';
+import { clamp, dbToGain, AIR_ABSORPTION_DB_M, C_AIR } from './acoustics.js';
 
 const RAMP = 0.02;
 
@@ -450,6 +450,13 @@ export async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {
   const irSeconds = Math.max(0.25, venue.irSeconds * quality);
   const started = now();
 
+  // Both speakers are trimmed by the same amount — whichever reaches the
+  // listener first — so the music starts the instant you press play while the
+  // few hundred microseconds between the two speakers, which is what places the
+  // stereo image, survive intact.
+  const distances = venue.speakers.map((p) => Math.hypot(p[0] - listener[0], p[1] - listener[1], p[2] - listener[2]));
+  const leadTrim = Math.min(...distances) / C_AIR;
+
   const reports = [];
   for (let i = 0; i < venue.speakers.length; i++) {
     const pos = venue.speakers[i];
@@ -468,6 +475,7 @@ export async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {
       diffuseRefDb: venue.diffuseRefDb ?? null,
       sampleRate,
       irSeconds,
+      leadTrim,
       seed: 0x5eed + i * 7717 + venue.id.length * 131,
     }));
   }
@@ -480,6 +488,7 @@ export async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {
       rt60: reports[0].rt60,
       tMix: reports[0].tMix,
       t0: reports[0].t0,
+      onset: reports[0].onset,
       reflections: reports[0].reflections,
       order: reports[0].order,
       irSeconds,

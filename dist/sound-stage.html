@@ -266,10 +266,9 @@ section { padding: 22px 0; border-bottom: 1px solid var(--line-soft); }
   margin: 0;
   text-transform: uppercase;
 }
-.room-head .place { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.room-head .meta { display: grid; gap: 2px; margin: 3px 0 0; font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
 .room-head .note { color: var(--ink-2); font-size: 14px; max-width: 52ch; margin: 6px 0 0; text-wrap: balance; }
-.room-head .spot { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; margin: 10px 0 0; font-size: 13.5px; }
-.spot-label { font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ground); background: var(--direct); padding: 3px 6px; border-radius: 2px; }
+.room-head .meta span + span { color: var(--direct); }
 
 .plot {
   position: relative;
@@ -290,7 +289,7 @@ section { padding: 22px 0; border-bottom: 1px solid var(--line-soft); }
 
 .readouts {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr 1.7fr;
   gap: 1px;
   background: var(--line-soft);
   border: 1px solid var(--line-soft);
@@ -298,7 +297,7 @@ section { padding: 22px 0; border-bottom: 1px solid var(--line-soft); }
   margin-top: 12px;
   overflow: hidden;
 }
-@media (min-width: 460px) { .readouts { grid-template-columns: repeat(4, 1fr); } }
+
 .readout { background: var(--panel); padding: 10px 12px; display: grid; gap: 2px; }
 .readout dt { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .readout dd {
@@ -309,15 +308,10 @@ section { padding: 22px 0; border-bottom: 1px solid var(--line-soft); }
   letter-spacing: -.01em;
 }
 .readout dd small { font-size: 10.5px; color: var(--muted); letter-spacing: .04em; }
+.readout dd.name { font-size: 13px; line-height: 1.35; letter-spacing: 0; color: var(--ink-2); }
 
-/* decay-time bars */
-.bands { margin-top: 12px; }
-.bands-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; align-items: end; height: 74px; }
-.band { display: grid; align-content: end; gap: 4px; height: 100%; }
-.band .bar { background: var(--tail); border-radius: 1px 1px 0 0; min-height: 2px; transition: height .3s ease; }
-.band .v { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--ink-2); text-align: center; font-variant-numeric: tabular-nums; }
-.band-axis { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 4px; }
-.band-axis span { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); text-align: center; }
+.lesson { margin: 12px 0 0; font-size: 13.5px; color: var(--ink-2); max-width: 48ch; }
+.lesson b { color: var(--tail); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* -------------------------------------------------------------- controls */
 
@@ -444,8 +438,8 @@ details.notes strong { color: var(--ink-2); }
     </div>
 
     <p class="hint" id="source-hint">
-      Streaming apps keep their audio to themselves — no app on a phone can reach inside Spotify or Apple Music.
-      Play a file here instead, or on a computer share a browser tab and process what it is playing.
+      No app on a phone can reach inside Spotify or Apple Music, so play a file here.
+      On a computer you can share a browser tab instead.
     </p>
   </section>
 
@@ -457,32 +451,28 @@ details.notes strong { color: var(--ink-2); }
   <section id="room">
     <div class="room-head">
       <h2 id="room-name">Living Room</h2>
-      <span class="place mono" id="room-place">Carpeted lounge, 7.5 × 5.0 m</span>
-      <p class="note" id="room-note">Two good bookshelf speakers, a sofa behind you, a window down one side.</p>
-      <p class="spot"><span class="spot-label mono">You are</span><span id="room-spot">On the sofa, 3.2 m back</span></p>
+      <p class="meta mono">
+        <span id="room-place">Carpeted lounge, 7.5 × 5 m</span>
+        <span id="room-spot">On the sofa, 3.2 m back</span>
+      </p>
+      <p class="note" id="room-note">Speakers placed properly, a rug, shelves down one wall.</p>
     </div>
 
     <div class="plot" id="plot">
       <canvas id="decay" width="1200" height="320" role="img"
-              aria-label="Energy decay of the room response over time"></canvas>
+              aria-label="How the sound in this room dies away over time"></canvas>
       <div class="plot-legend">
-        <span><i style="background:var(--direct)"></i>Direct &amp; early reflections</span>
+        <span><i style="background:var(--direct)"></i>Early reflections</span>
         <span><i style="background:var(--tail)"></i>Reverberant tail</span>
       </div>
     </div>
 
     <dl class="readouts">
-      <div class="readout"><dt>Decay to −60 dB</dt><dd id="r-rt">—<small> s</small></dd></div>
-      <div class="readout"><dt>Speaker distance</dt><dd id="r-dist">—<small> m</small></dd></div>
-      <div class="readout"><dt>Sound arrives in</dt><dd id="r-t0">—<small> ms</small></dd></div>
-      <div class="readout"><dt>Reflections traced</dt><dd id="r-refl">—</dd></div>
+      <div class="readout"><dt>Decay</dt><dd id="r-rt">0.34<small> s</small></dd></div>
+      <div class="readout"><dt>System</dt><dd class="name" id="r-sys">Well-placed hi-fi pair</dd></div>
     </dl>
 
-    <div class="bands">
-      <p class="eyebrow" style="margin-bottom:8px">Decay time by octave band, seconds</p>
-      <div class="bands-grid" id="bands"></div>
-      <div class="band-axis" id="band-axis"></div>
-    </div>
+    <p class="lesson" id="lesson">Low notes hang on 1.8× longer than the top.</p>
   </section>
 
   <section id="controls-section">
@@ -517,6 +507,10 @@ details.notes strong { color: var(--ink-2); }
         rooms — the sweet spot in a control room, the middle of the bowl in a stadium — so the app puts you there
         rather than asking. How hard each system is driven is set the same way: a club rig is wide open, a pair of
         studio monitors is not.</p>
+      <p><strong>One thing is deliberately not real.</strong> Sound takes two tenths of a second to cross a stadium,
+        and the model knows it — but nobody wants to wait through that every time they press play, so the flight
+        time is trimmed off the front. The far smaller gap <em>between</em> the two speakers is kept, because that
+        is what places the stereo image.</p>
       <p><strong>If it stutters.</strong>
         <span class="seg" role="group" aria-label="Response length" id="quality">
           <button type="button" data-q="0.55" aria-pressed="false">Light</button>
@@ -582,6 +576,8 @@ const MATERIALS = {
   woodFloor:  { name: 'Wood floor',      a: [0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07], s: [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.17] },
   carpet:     { name: 'Heavy carpet',    a: [0.08, 0.24, 0.57, 0.69, 0.71, 0.73, 0.75], s: [0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40] },
   shelvedWall:{ name: 'Full bookshelves and curtains', a: [0.30, 0.34, 0.32, 0.30, 0.30, 0.32, 0.34], s: [0.35, 0.45, 0.55, 0.65, 0.70, 0.75, 0.78] },
+  stainedGlass:{ name: 'Leaded stained glass in stone tracery', a: [0.20, 0.16, 0.12, 0.09, 0.06, 0.05, 0.05], s: [0.10, 0.12, 0.14, 0.16, 0.18, 0.20, 0.22] },
+  naveSeating:{ name: 'Pews, runners, a scattered congregation', a: [0.16, 0.20, 0.28, 0.33, 0.36, 0.38, 0.38], s: [0.30, 0.40, 0.50, 0.55, 0.60, 0.65, 0.65] },
   glass:      { name: 'Window glass',    a: [0.35, 0.25, 0.18, 0.12, 0.07, 0.04, 0.04], s: [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08] },
   acoustic:   { name: 'Acoustic treatment', a: [0.30, 0.60, 0.85, 0.95, 0.95, 0.90, 0.88], s: [0.20, 0.30, 0.40, 0.50, 0.55, 0.60, 0.60] },
   audience:   { name: 'Seated audience', a: [0.39, 0.57, 0.80, 0.94, 0.92, 0.87, 0.85], s: [0.30, 0.40, 0.50, 0.60, 0.65, 0.70, 0.70] },
@@ -806,7 +802,7 @@ function directivityGains(cosBeta, spread, out) {
  * Returns the number of reflections actually placed.
  */
 function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
-  const { dims, listener, yaw, source, aim, spread, beta, scat, tMix, irSeconds, t0 } = cfg;
+  const { dims, listener, yaw, source, aim, spread, beta, scat, tMix, irSeconds, t0, leadTrim } = cfg;
   const [Lx, Ly, Lz] = dims;
 
   const fwdVec = [Math.cos(yaw), Math.sin(yaw), 0];
@@ -826,7 +822,7 @@ function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
   // from zero: across a stadium the direct sound does not turn up for a third
   // of a second, and the tail must not start before it.
   const tFade = t0 + tMix;
-  const tEnd = Math.min(irSeconds, tFade + 0.5 * tMix);
+  const tEnd = Math.min(irSeconds + leadTrim, tFade + 0.5 * tMix);
   let placed = 0;
 
   for (let ux = 0; ux <= 1; ux++) {
@@ -888,8 +884,12 @@ function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
               const aimImg = [sx * aim[0], sy * aim[1], sz * aim[2]];
               directivityGains(-dot(aimImg, dirUnit), spread, dirG);
 
-              const tL = ((d + earPathOffset(thetaL)) / C_AIR) * sampleRate;
-              const tR = ((d + earPathOffset(thetaR)) / C_AIR) * sampleRate;
+              // Sample positions are measured from the moment the sound first
+              // reaches the listener, not from when it left the speaker: the
+              // flight time is real but there is no reason to make anyone wait
+              // through it before the music starts.
+              const tL = ((d + earPathOffset(thetaL)) / C_AIR - leadTrim) * sampleRate;
+              const tR = ((d + earPathOffset(thetaR)) / C_AIR - leadTrim) * sampleRate;
 
               const spread1r = fade / Math.max(d, 0.35);
               const counts = [nX0, nX1, nY0, nY1, nZ0, nZ1];
@@ -926,13 +926,15 @@ function diffuseCoherence(f) {
 }
 
 function renderLateTail(cfg, bandBuf, sampleRate, rnd) {
-  const { rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb } = cfg;
+  const { rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb, leadTrim } = cfg;
   if (diffuse <= 0) return;
   const len = bandBuf[0][0].length;
 
-  const iFadeStart = Math.floor((t0 + 0.5 * tMix) * sampleRate);
-  const iFadeEnd = Math.floor((t0 + tMix) * sampleRate);
-  const iMeasureFrom = Math.floor((t0 + 0.55 * tMix) * sampleRate);
+  // Sample index of a physical time, allowing for the trimmed flight time.
+  const idx = (t) => Math.floor((t - leadTrim) * sampleRate);
+  const iFadeStart = idx(t0 + 0.5 * tMix);
+  const iFadeEnd = idx(t0 + tMix);
+  const iMeasureFrom = idx(t0 + 0.55 * tMix);
   const fadeSpan = Math.max(1, iFadeEnd - iFadeStart);
 
   const tailL = new Float32Array(len);
@@ -950,7 +952,7 @@ function renderLateTail(cfg, bandBuf, sampleRate, rnd) {
 
     let last = iFadeStart;
     for (let i = Math.max(0, iFadeStart); i < len; i++) {
-      const env = Math.pow(10, (-3 * (i / sampleRate - t0 - 0.5 * tMix)) / T);
+      const env = Math.pow(10, (-3 * (i / sampleRate + leadTrim - t0 - 0.5 * tMix)) / T);
       if (env < 1e-6) break;
       const u = (i - iFadeStart) / fadeSpan;
       const fade = u >= 1 ? 1 : 0.5 * (1 - Math.cos(Math.PI * u));
@@ -982,7 +984,7 @@ function renderLateTail(cfg, bandBuf, sampleRate, rnd) {
     if (eIsmL < floorE && eIsmR < floorE && diffuseRefDb != null) {
       const ref = Math.pow(10, diffuseRefDb / 10);
       let dL = 0, dR = 0, dn = 0;
-      const from = Math.max(0, Math.floor(t0 * sampleRate) - 4);
+      const from = Math.max(0, idx(t0) - 4);
       const to = Math.min(len, from + Math.ceil(0.03 * sampleRate));
       for (let i = from; i < to; i++) { dL += bandBuf[b][0][i] ** 2; dR += bandBuf[b][1][i] ** 2; dn++; }
       if (dn > 0) { eIsmL = (dL / dn) * ref * n; eIsmR = (dR / dn) * ref * n; }
@@ -1052,7 +1054,7 @@ async function renderSpeakerBRIR(opts) {
   const {
     dims, materials, listener, yaw, source, aim,
     spread = 1, sampleRate, irSeconds, seed = 1,
-    diffuse = 1, rt60Override = null, diffuseRefDb = null,
+    diffuse = 1, rt60Override = null, diffuseRefDb = null, leadTrim = 0,
   } = opts;
 
   const rnd = mulberry32(seed);
@@ -1073,14 +1075,18 @@ async function renderSpeakerBRIR(opts) {
     dims, listener, yaw, source, aim, spread,
     beta: reflectionCoefficients(materials),
     scat: scatterCoefficients(materials),
-    rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb,
+    rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb, leadTrim,
   };
 
   const ism = renderImageSources(cfg, bandBuf, sampleRate, rnd);
   renderLateTail(cfg, bandBuf, sampleRate, rnd);
   const rendered = await collapseBands(bandBuf, sampleRate, len);
 
-  return { buffer: rendered, rt60, tMix, t0, reflections: ism.placed, order: ism.order };
+  return {
+    buffer: rendered, rt60, tMix, t0,
+    onset: t0 - leadTrim,
+    reflections: ism.placed, order: ism.order,
+  };
 }
 
 
@@ -1138,10 +1144,15 @@ const SYSTEMS = {
     drive: 0.035,
   },
   columnPA: {
-    name: 'Steerable column array, time-aligned',
-    hp: [48, 0.8], lp: [17500, 0.7],
-    bands: [[90, 1.0, 1.8], [400, 1.1, -2.6], [2200, 0.9, 1.8], [7000, 0.8, 1.0, 'highshelf']],
-    drive: 0.02,
+    // The best system a church can have. A digitally steered column throws a
+    // tight vertical beam down the nave and barely touches the walls, so the
+    // music stays defined while the room still blooms behind it. Subs are the
+    // other half: a stone nave supports low end like nothing else, and a
+    // system that stops at 90 Hz throws that away.
+    name: 'Steered column array with subs',
+    hp: [38, 0.75], lp: [18500, 0.7],
+    bands: [[55, 1.0, 2.4], [315, 1.1, -2.8], [2500, 0.9, 2.0], [8000, 0.7, 1.8, 'highshelf']],
+    drive: 0.015,
   },
   hallRig: {
     name: 'Discreet reinforcement',
@@ -1173,7 +1184,7 @@ const VENUES = [
   {
     id: 'studio',
     name: 'Control Room',
-    place: 'Treated studio, 6.5 × 4.8 m',
+    place: 'Treated control room',
     note: 'The reference. Almost no room — this is roughly what the mix engineer heard.',
     system: 'monitors',
     dims: [6.5, 4.8, 3.0],
@@ -1181,12 +1192,12 @@ const VENUES = [
     listener: [3.0, 2.4, 1.2],
     spot: 'In the sweet spot, 1.6 m back',
     speakers: [[4.5, 3.05, 1.25], [4.5, 1.75, 1.25]],
-    spread: 1.0, irSeconds: 0.6, trimDb: 0,
+    spread: 1.0, irSeconds: 0.5, trimDb: 0,
   },
   {
     id: 'living',
     name: 'Living Room',
-    place: 'Carpeted lounge, 7.5 × 5.0 m',
+    place: 'Carpeted lounge, 7.5 × 5 m',
     note: 'Speakers placed properly, a rug, shelves down one wall. What a room like this does when someone has bothered.',
     system: 'bookshelf',
     dims: [7.5, 5.0, 2.7],
@@ -1194,12 +1205,12 @@ const VENUES = [
     listener: [2.9, 2.5, 1.15],
     spot: 'On the sofa, 3.2 m back',
     speakers: [[5.9, 3.7, 1.05], [5.9, 1.3, 1.05]],
-    spread: 1.0, irSeconds: 0.9, trimDb: 0,
+    spread: 1.0, irSeconds: 0.7, trimDb: 0,
   },
   {
     id: 'jazz',
     name: 'Jazz Club',
-    place: 'Brick basement, 12 × 9 m',
+    place: 'Brick basement, low ceiling',
     note: 'Bare brick and a low ceiling, with a small, properly rung PA barely two tables away.',
     system: 'clubPA',
     dims: [12, 9, 3.2],
@@ -1207,12 +1218,12 @@ const VENUES = [
     listener: [6.2, 4.5, 1.15],
     spot: 'Two tables back, 4.5 m from the stack',
     speakers: [[10.2, 6.3, 2.05], [10.2, 2.7, 2.05]],
-    spread: 1.3, irSeconds: 1.0, trimDb: 0,
+    spread: 1.3, irSeconds: 0.9, trimDb: 0,
   },
   {
     id: 'hall',
     name: 'Concert Hall',
-    place: 'Shoebox hall, 45 × 22 × 17 m',
+    place: 'Shoebox hall, 17 m to the ceiling',
     note: 'Plaster and wood, a full house, the long even decay these rooms are built for.',
     system: 'hallRig',
     dims: [45, 22, 17],
@@ -1225,20 +1236,22 @@ const VENUES = [
   {
     id: 'church',
     name: 'Stone Church',
-    place: 'Stone nave, 30 × 14 × 15 m',
-    note: 'Stained glass, a hard floor, nearly five seconds of tail — and an array aimed tightly enough that the music stays defined inside it.',
+    place: 'Stone nave, 15 m to the vault',
+    note: 'Four seconds of tail that gets warmer as it falls, and a beam tight enough that the music stays defined inside it.',
     system: 'columnPA',
     dims: [30, 14, 15],
-    materials: { xMin: 'woodPanel', xMax: 'stone', yMin: 'glass', yMax: 'plaster', floor: 'naveFloor', ceiling: 'plaster' },
-    listener: [15, 7, 1.3],
-    spot: 'Halfway down the nave, 12 m back',
+    materials: { xMin: 'woodPanel', xMax: 'stone', yMin: 'stainedGlass', yMax: 'plaster', floor: 'naveSeating', ceiling: 'plaster' },
+    listener: [17, 7, 1.3],
+    spot: 'Ten rows back, 10 m from the array',
     speakers: [[26.5, 9.6, 4.2], [26.5, 4.4, 4.2]],
-    spread: 1.45, irSeconds: 5.0, trimDb: 0,
+    // A steered array is far more directional than a plain column, which is
+    // exactly what buys the clarity in a room this live.
+    spread: 2.2, irSeconds: 4.9, trimDb: 0,
   },
   {
     id: 'club',
     name: 'Nightclub',
-    place: 'Concrete room, 24 × 16 m',
+    place: 'Concrete room, treated ceiling',
     note: 'Horn-loaded subs, a treated ceiling, a floor full of people. Tight enough that the kick lands, still big enough to feel.',
     system: 'soundSystem',
     dims: [24, 16, 5.5],
@@ -1246,7 +1259,7 @@ const VENUES = [
     listener: [13, 8, 1.6],
     spot: 'Out on the floor, 9 m from the stacks',
     speakers: [[21.5, 11.6, 2.6], [21.5, 4.4, 2.6]],
-    spread: 1.6, irSeconds: 2.2, trimDb: 0,
+    spread: 1.6, irSeconds: 2.0, trimDb: 0,
   },
   {
     id: 'stadium',
@@ -1259,7 +1272,7 @@ const VENUES = [
     listener: [95, 70, 2],
     spot: 'Middle of the bowl, 67 m from the arrays',
     speakers: [[150, 100, 27], [150, 40, 27]],
-    spread: 2.1, irSeconds: 3.0, trimDb: 0,
+    spread: 2.1, irSeconds: 2.7, trimDb: 0,
     airComp: true,
   },
   {
@@ -1273,7 +1286,7 @@ const VENUES = [
     listener: [160, 150, 1.65],
     spot: 'In the crowd, 74 m from the stage',
     speakers: [[232, 166, 8.5], [232, 134, 8.5]],
-    spread: 2.1, irSeconds: 1.3, trimDb: 0,
+    spread: 2.1, irSeconds: 1.0, trimDb: 0,
     airComp: true,
     // No walls means no reverberant field. What little decay there is comes off
     // the crowd and the distant site structures, so it is stated rather than
@@ -1285,7 +1298,7 @@ const VENUES = [
   {
     id: 'car',
     name: 'Car',
-    place: 'Saloon cabin, 2.4 × 1.6 m',
+    place: 'Saloon cabin',
     note: 'Door speakers a foot from one ear and three from the other, time-aligned as far as anyone can in a car. Nothing is centred.',
     system: 'carDoors',
     dims: [2.4, 1.6, 1.15],
@@ -1293,7 +1306,7 @@ const VENUES = [
     listener: [0.85, 0.48, 0.82],
     spot: "Driver's seat — nothing is centred",
     speakers: [[1.62, 1.46, 0.32], [1.62, 0.14, 0.32]],
-    spread: 1.1, irSeconds: 0.3, trimDb: 0,
+    spread: 1.1, irSeconds: 0.25, trimDb: 0,
   },
 ];
 
@@ -1752,6 +1765,13 @@ async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {}) {
   const irSeconds = Math.max(0.25, venue.irSeconds * quality);
   const started = now();
 
+  // Both speakers are trimmed by the same amount — whichever reaches the
+  // listener first — so the music starts the instant you press play while the
+  // few hundred microseconds between the two speakers, which is what places the
+  // stereo image, survive intact.
+  const distances = venue.speakers.map((p) => Math.hypot(p[0] - listener[0], p[1] - listener[1], p[2] - listener[2]));
+  const leadTrim = Math.min(...distances) / C_AIR;
+
   const reports = [];
   for (let i = 0; i < venue.speakers.length; i++) {
     const pos = venue.speakers[i];
@@ -1770,6 +1790,7 @@ async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {}) {
       diffuseRefDb: venue.diffuseRefDb ?? null,
       sampleRate,
       irSeconds,
+      leadTrim,
       seed: 0x5eed + i * 7717 + venue.id.length * 131,
     }));
   }
@@ -1782,6 +1803,7 @@ async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {}) {
       rt60: reports[0].rt60,
       tMix: reports[0].tMix,
       t0: reports[0].t0,
+      onset: reports[0].onset,
       reflections: reports[0].reflections,
       order: reports[0].order,
       irSeconds,
@@ -1886,12 +1908,6 @@ function buildVenueTiles() {
   }
 }
 
-function buildBandAxis() {
-  $('band-axis').innerHTML = BAND_CENTRES
-    .map((f) => `<span>${f >= 1000 ? `${f / 1000}k` : f}</span>`)
-    .join('');
-}
-
 /* -------------------------------------------------------------- rendering */
 
 let renderToken = 0;
@@ -1941,6 +1957,7 @@ function paintVenueText() {
   $('room-place').textContent = v.place;
   $('room-note').textContent = v.note;
   $('room-spot').textContent = v.spot;
+  $('r-sys').textContent = SYSTEMS[v.system].name;
 }
 
 /* ------------------------------------------------------------- room paint */
@@ -1948,15 +1965,14 @@ function paintVenueText() {
 function paintRoom(report) {
   const rtMid = (report.rt60[2] + report.rt60[3]) / 2;
   $('r-rt').innerHTML = `${rtMid < 1 ? rtMid.toFixed(2) : rtMid.toFixed(1)}<small> s</small>`;
-  $('r-dist').innerHTML = `${report.distance.toFixed(report.distance < 10 ? 1 : 0)}<small> m</small>`;
-  $('r-t0').innerHTML = `${Math.round(report.t0 * 1000)}<small> ms</small>`;
-  $('r-refl').textContent = report.reflections.toLocaleString();
 
-  const max = Math.max(...report.rt60, 0.2);
-  $('bands').innerHTML = report.rt60.map((t) => {
-    const h = Math.max(2, Math.round((t / max) * 54));
-    return `<div class="band"><span class="v">${t < 1 ? t.toFixed(2) : t.toFixed(1)}</span><div class="bar" style="height:${h}px"></div></div>`;
-  }).join('');
+  // One thing worth knowing about every room, taken from its own numbers:
+  // low frequencies almost always outlast high ones, and by how much is most
+  // of what separates a warm room from a bright one.
+  const ratio = report.rt60[0] / Math.max(report.rt60[6], 0.01);
+  $('lesson').innerHTML = ratio >= 1.2
+    ? `Low notes hang on <b>${ratio.toFixed(1)}×</b> longer here than the top end.`
+    : 'The decay is even right across the spectrum here.';
 
   drawDecay(report);
 }
@@ -1989,7 +2005,6 @@ function drawDecay(report) {
   const x = (t) => padL + (t / seconds) * plotW;
   const y = (d) => padT + (1 - (d - FLOOR) / -FLOOR) * plotH;
 
-  const ink = css('--ink-2') || '#888';
   const muted = css('--muted') || '#888';
   const line = css('--line-soft') || '#ddd';
   const direct = css('--direct') || '#4fc8d9';
@@ -2016,7 +2031,7 @@ function drawDecay(report) {
 
   // The handover from traced reflections to the diffuse tail — the same split
   // the synthesis uses, so the two colours mean exactly what the legend says.
-  const tSplit = Math.min(seconds, report.t0 + report.tMix);
+  const tSplit = Math.min(seconds, report.onset + report.tMix);
   const n = db.length;
   const pt = (i) => [x((i / n) * seconds), y(db[i])];
 
@@ -2058,18 +2073,6 @@ function drawDecay(report) {
   cx.globalAlpha = 0.55;
   cx.beginPath(); cx.moveTo(xs, padT); cx.lineTo(xs, padT + plotH); cx.stroke();
   cx.globalAlpha = 1;
-
-  // direct-sound arrival
-  if (report.t0 * 1000 > 8) {
-    const xx = Math.round(x(report.t0)) + 0.5;
-    cx.setLineDash([2, 3]);
-    cx.strokeStyle = direct;
-    cx.beginPath(); cx.moveTo(xx, padT); cx.lineTo(xx, padT + plotH); cx.stroke();
-    cx.setLineDash([]);
-    cx.fillStyle = ink;
-    cx.textAlign = xx > w * 0.7 ? 'right' : 'left';
-    cx.fillText('direct', xx + (xx > w * 0.7 ? -4 : 4), padT + 9);
-  }
 
   cx.fillStyle = muted;
   cx.textAlign = 'right';
@@ -2231,7 +2234,6 @@ function meterLoop() {
 
 function boot() {
   buildVenueTiles();
-  buildBandAxis();
   paintVenueText();
   $('transport').style.display = 'none';
   refreshRoom();

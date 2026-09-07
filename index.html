@@ -46,8 +46,8 @@
     </div>
 
     <p class="hint" id="source-hint">
-      Streaming apps keep their audio to themselves — no app on a phone can reach inside Spotify or Apple Music.
-      Play a file here instead, or on a computer share a browser tab and process what it is playing.
+      No app on a phone can reach inside Spotify or Apple Music, so play a file here.
+      On a computer you can share a browser tab instead.
     </p>
   </section>
 
@@ -59,32 +59,28 @@
   <section id="room">
     <div class="room-head">
       <h2 id="room-name">Living Room</h2>
-      <span class="place mono" id="room-place">Carpeted lounge, 7.5 × 5.0 m</span>
-      <p class="note" id="room-note">Two good bookshelf speakers, a sofa behind you, a window down one side.</p>
-      <p class="spot"><span class="spot-label mono">You are</span><span id="room-spot">On the sofa, 3.2 m back</span></p>
+      <p class="meta mono">
+        <span id="room-place">Carpeted lounge, 7.5 × 5 m</span>
+        <span id="room-spot">On the sofa, 3.2 m back</span>
+      </p>
+      <p class="note" id="room-note">Speakers placed properly, a rug, shelves down one wall.</p>
     </div>
 
     <div class="plot" id="plot">
       <canvas id="decay" width="1200" height="320" role="img"
-              aria-label="Energy decay of the room response over time"></canvas>
+              aria-label="How the sound in this room dies away over time"></canvas>
       <div class="plot-legend">
-        <span><i style="background:var(--direct)"></i>Direct &amp; early reflections</span>
+        <span><i style="background:var(--direct)"></i>Early reflections</span>
         <span><i style="background:var(--tail)"></i>Reverberant tail</span>
       </div>
     </div>
 
     <dl class="readouts">
-      <div class="readout"><dt>Decay to −60 dB</dt><dd id="r-rt">—<small> s</small></dd></div>
-      <div class="readout"><dt>Speaker distance</dt><dd id="r-dist">—<small> m</small></dd></div>
-      <div class="readout"><dt>Sound arrives in</dt><dd id="r-t0">—<small> ms</small></dd></div>
-      <div class="readout"><dt>Reflections traced</dt><dd id="r-refl">—</dd></div>
+      <div class="readout"><dt>Decay</dt><dd id="r-rt">0.34<small> s</small></dd></div>
+      <div class="readout"><dt>System</dt><dd class="name" id="r-sys">Well-placed hi-fi pair</dd></div>
     </dl>
 
-    <div class="bands">
-      <p class="eyebrow" style="margin-bottom:8px">Decay time by octave band, seconds</p>
-      <div class="bands-grid" id="bands"></div>
-      <div class="band-axis" id="band-axis"></div>
-    </div>
+    <p class="lesson" id="lesson">Low notes hang on 1.8× longer than the top.</p>
   </section>
 
   <section id="controls-section">
@@ -119,6 +115,10 @@
         rooms — the sweet spot in a control room, the middle of the bowl in a stadium — so the app puts you there
         rather than asking. How hard each system is driven is set the same way: a club rig is wide open, a pair of
         studio monitors is not.</p>
+      <p><strong>One thing is deliberately not real.</strong> Sound takes two tenths of a second to cross a stadium,
+        and the model knows it — but nobody wants to wait through that every time they press play, so the flight
+        time is trimmed off the front. The far smaller gap <em>between</em> the two speakers is kept, because that
+        is what places the stereo image.</p>
       <p><strong>If it stutters.</strong>
         <span class="seg" role="group" aria-label="Response length" id="quality">
           <button type="button" data-q="0.55" aria-pressed="false">Light</button>

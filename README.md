@@ -88,6 +88,13 @@ that your head is in the way puts the room *around* you.
 The output meter reads through the same K-weighting, so it shows perceived
 level rather than raw amplitude — a rig with a big low end does not just peg it.
 
+**The flight time is trimmed off the front.** Sound really does take two tenths
+of a second to cross a stadium, and the model knows it — but nobody wants to
+wait through that every time they press play. Both loudspeaker responses are
+shifted by the same amount, whichever reaches you first, so the music starts
+immediately while the few hundred microseconds *between* the two speakers,
+which is what places the stereo image, survive intact.
+
 **A/B is loudness-matched.** Switching between the room and the raw file plays
 pink noise through an exact copy of the chain, measures both through the
 ITU-R BS.1770 K-weighting filter broadcast loudness meters use, and matches
@@ -95,6 +102,25 @@ them. So the comparison is of character, not volume. This is measured rather
 than calculated, because the honest answer depends on the spectrum of the
 material — a room with a long bass decay adds far more to a bass-heavy record
 than a flat energy sum would predict.
+
+### The church, in particular
+
+It is the room the whole idea is really for, so it gets the most attention. Its
+decay is shaped to the profile a beautiful nave actually has — warm at the
+bottom, peaking around 250 Hz, falling smoothly above, with the air taking the
+very top:
+
+| | 125 | 250 | 500 | 1k | 2k | 4k | 8k |
+|---|---|---|---|---|---|---|---|
+| Decay, s | 4.4 | 4.7 | 4.3 | 4.0 | 3.6 | 2.9 | 1.7 |
+
+That warm falling shape, rather than a mid-forward ring, is most of what
+separates a cathedral you want to sit in from one that turns music to mush. The
+rest is the system: a digitally steered column throws a tight vertical beam down
+the nave and barely touches the walls, so the direct sound stays defined while
+the room still blooms behind it — and it runs full-range, because a stone nave
+supports low end like nothing else and a system that stops at 90 Hz throws that
+away.
 
 ## The rooms
 
@@ -117,7 +143,7 @@ a stadium — so the app decides, rather than handing over a distance slider.
 | Living Room | 7.5 × 5.0 × 2.7 m | On the sofa, 3.2 m back | 0.34 s | Well-placed hi-fi pair |
 | Jazz Club | 12 × 9 × 3.2 m | Two tables back, 4.5 m | 0.32 s | Tuned club PA with subs |
 | Concert Hall | 45 × 22 × 17 m | Mid-stalls, 18 m | 2.2 s | Discreet reinforcement |
-| Stone Church | 30 × 14 × 15 m | Halfway down the nave, 12 m | 4.6 s | Steerable column array |
+| Stone Church | 30 × 14 × 15 m | Ten rows back, 10 m from the array | 4.1 s | Steered column array with subs |
 | Nightclub | 24 × 16 × 5.5 m | On the floor, 9 m from the stacks | 0.67 s | Tuned club rig, horn subs |
 | Stadium | 190 × 140 m, open | Middle of the bowl, 67 m | 1.3 s | Flown array + 6 dB air compensation |
 | Open Air Field | no walls | In the crowd, 74 m | 0.49 s | Flown array + 6 dB air compensation |
