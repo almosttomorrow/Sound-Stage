@@ -579,11 +579,13 @@ const MATERIALS = {
   stainedGlass:{ name: 'Leaded stained glass in stone tracery', a: [0.20, 0.16, 0.12, 0.09, 0.06, 0.05, 0.05], s: [0.10, 0.12, 0.14, 0.16, 0.18, 0.20, 0.22] },
   naveSeating:{ name: 'Pews, runners, a scattered congregation', a: [0.16, 0.20, 0.28, 0.33, 0.36, 0.38, 0.38], s: [0.30, 0.40, 0.50, 0.55, 0.60, 0.65, 0.65] },
   glass:      { name: 'Window glass',    a: [0.35, 0.25, 0.18, 0.12, 0.07, 0.04, 0.04], s: [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08] },
+  deepAbsorber:{ name: 'Deep porous absorber over an air gap', a: [0.65, 0.82, 0.92, 0.95, 0.94, 0.90, 0.86], s: [0.20, 0.30, 0.40, 0.50, 0.55, 0.60, 0.60] },
+  hallPanel:  { name: 'Thin timber panelling over a cavity', a: [0.28, 0.22, 0.17, 0.09, 0.10, 0.11, 0.11], s: [0.15, 0.20, 0.26, 0.32, 0.38, 0.42, 0.44] },
   acoustic:   { name: 'Acoustic treatment', a: [0.30, 0.60, 0.85, 0.95, 0.95, 0.90, 0.88], s: [0.20, 0.30, 0.40, 0.50, 0.55, 0.60, 0.60] },
   audience:   { name: 'Seated audience', a: [0.39, 0.57, 0.80, 0.94, 0.92, 0.87, 0.85], s: [0.30, 0.40, 0.50, 0.60, 0.65, 0.70, 0.70] },
   pews:       { name: 'Empty wooden pews', a: [0.10, 0.09, 0.08, 0.08, 0.08, 0.08, 0.08], s: [0.25, 0.35, 0.45, 0.50, 0.55, 0.60, 0.60] },
   naveFloor:  { name: 'Pews, aisle runner, small congregation', a: [0.16, 0.17, 0.19, 0.21, 0.23, 0.25, 0.26], s: [0.25, 0.35, 0.45, 0.50, 0.55, 0.60, 0.60] },
-  clubCeiling:{ name: 'Treated club ceiling', a: [0.12, 0.20, 0.28, 0.32, 0.34, 0.32, 0.30], s: [0.30, 0.40, 0.50, 0.55, 0.60, 0.65, 0.65] },
+  clubCeiling:{ name: 'Treated club ceiling with bass traps', a: [0.45, 0.50, 0.45, 0.40, 0.38, 0.36, 0.34], s: [0.30, 0.40, 0.50, 0.55, 0.60, 0.65, 0.65] },
   clubFloor:  { name: 'Packed dance floor',  a: [0.22, 0.38, 0.52, 0.60, 0.64, 0.66, 0.67], s: [0.30, 0.40, 0.50, 0.55, 0.60, 0.65, 0.65] },
   softFurn:   { name: 'Sofa & soft furnishing', a: [0.20, 0.35, 0.50, 0.58, 0.62, 0.65, 0.66], s: [0.25, 0.35, 0.45, 0.50, 0.55, 0.60, 0.60] },
   grass:      { name: 'Grass pitch',     a: [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.85], s: [0.30, 0.40, 0.50, 0.60, 0.65, 0.70, 0.70] },
@@ -784,12 +786,22 @@ function pinnaGains(forward, up, out) {
  *  strongly beamed at 8 kHz — the reason a room's reflections are duller than
  *  the sound arriving straight at you. */
 const DIRECTIVITY_P = [0.15, 0.3, 0.6, 1.1, 1.8, 2.6, 3.4];
+
+/**
+ * Cardioid sub arrays. A plain subwoofer is very nearly omnidirectional, which
+ * is why a big rig booms a room out: half its low end goes into the walls. A
+ * cardioid array — rear boxes delayed and polarity-flipped — cancels most of
+ * what would go backwards, and is standard on any modern system. Modelled by
+ * giving the bottom three bands the directivity the mids already have.
+ */
+const CARDIOID_SUB_P = [1.1, 1.1, 0.9, 1.1, 1.8, 2.6, 3.4];
+
 const DIRECTIVITY_FLOOR = 0.06;
 
-function directivityGains(cosBeta, spread, out) {
+function directivityGains(cosBeta, spread, out, pExp) {
   const x = Math.max(0, (1 + cosBeta) / 2);
   for (let b = 0; b < NBANDS; b++) {
-    const p = DIRECTIVITY_P[b] * spread;
+    const p = pExp[b] * spread;
     out[b] = DIRECTIVITY_FLOOR + (1 - DIRECTIVITY_FLOOR) * Math.pow(x, p);
   }
   return out;
@@ -802,7 +814,7 @@ function directivityGains(cosBeta, spread, out) {
  * Returns the number of reflections actually placed.
  */
 function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
-  const { dims, listener, yaw, source, aim, spread, beta, scat, tMix, irSeconds, t0, leadTrim } = cfg;
+  const { dims, listener, yaw, source, aim, spread, beta, scat, tMix, irSeconds, t0, leadTrim, directivityP } = cfg;
   const [Lx, Ly, Lz] = dims;
 
   const fwdVec = [Math.cos(yaw), Math.sin(yaw), 0];
@@ -882,7 +894,7 @@ function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
 
               // Emission angle: the source's aim is mirrored along with it.
               const aimImg = [sx * aim[0], sy * aim[1], sz * aim[2]];
-              directivityGains(-dot(aimImg, dirUnit), spread, dirG);
+              directivityGains(-dot(aimImg, dirUnit), spread, dirG, directivityP);
 
               // Sample positions are measured from the moment the sound first
               // reaches the listener, not from when it left the speaker: the
@@ -1055,6 +1067,7 @@ async function renderSpeakerBRIR(opts) {
     dims, materials, listener, yaw, source, aim,
     spread = 1, sampleRate, irSeconds, seed = 1,
     diffuse = 1, rt60Override = null, diffuseRefDb = null, leadTrim = 0,
+    directivityP = DIRECTIVITY_P,
   } = opts;
 
   const rnd = mulberry32(seed);
@@ -1075,7 +1088,7 @@ async function renderSpeakerBRIR(opts) {
     dims, listener, yaw, source, aim, spread,
     beta: reflectionCoefficients(materials),
     scat: scatterCoefficients(materials),
-    rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb, leadTrim,
+    rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb, leadTrim, directivityP,
   };
 
   const ism = renderImageSources(cfg, bandBuf, sampleRate, rnd);
@@ -1188,24 +1201,24 @@ const VENUES = [
     note: 'The reference. Almost no room — this is roughly what the mix engineer heard.',
     system: 'monitors',
     dims: [6.5, 4.8, 3.0],
-    materials: { xMin: 'acoustic', xMax: 'acoustic', yMin: 'acoustic', yMax: 'gypsum', floor: 'woodFloor', ceiling: 'acoustic' },
+    materials: { xMin: 'deepAbsorber', xMax: 'deepAbsorber', yMin: 'deepAbsorber', yMax: 'gypsum', floor: 'woodFloor', ceiling: 'deepAbsorber' },
     listener: [3.0, 2.4, 1.2],
     spot: 'In the sweet spot, 1.6 m back',
     speakers: [[4.5, 3.05, 1.25], [4.5, 1.75, 1.25]],
-    spread: 1.0, irSeconds: 0.5, trimDb: 0,
+    spread: 1.0, irSeconds: 0.35, trimDb: 0,
   },
   {
     id: 'living',
     name: 'Living Room',
     place: 'Carpeted lounge, 7.5 × 5 m',
-    note: 'Speakers placed properly, a rug, shelves down one wall. What a room like this does when someone has bothered.',
+    note: 'Speakers placed properly, a rug, shelves one side and curtains the other. What a room like this does when someone has bothered.',
     system: 'bookshelf',
     dims: [7.5, 5.0, 2.7],
-    materials: { xMin: 'softFurn', xMax: 'gypsum', yMin: 'shelvedWall', yMax: 'gypsum', floor: 'carpet', ceiling: 'gypsum' },
+    materials: { xMin: 'softFurn', xMax: 'gypsum', yMin: 'shelvedWall', yMax: 'shelvedWall', floor: 'carpet', ceiling: 'gypsum' },
     listener: [2.9, 2.5, 1.15],
     spot: 'On the sofa, 3.2 m back',
     speakers: [[5.9, 3.7, 1.05], [5.9, 1.3, 1.05]],
-    spread: 1.0, irSeconds: 0.7, trimDb: 0,
+    spread: 1.0, irSeconds: 0.6, trimDb: 0,
   },
   {
     id: 'jazz',
@@ -1214,11 +1227,11 @@ const VENUES = [
     note: 'Bare brick and a low ceiling, with a small, properly rung PA barely two tables away.',
     system: 'clubPA',
     dims: [12, 9, 3.2],
-    materials: { xMin: 'audience', xMax: 'brick', yMin: 'brick', yMax: 'woodPanel', floor: 'woodFloor', ceiling: 'acoustic' },
+    materials: { xMin: 'audience', xMax: 'brick', yMin: 'brick', yMax: 'woodPanel', floor: 'woodFloor', ceiling: 'deepAbsorber' },
     listener: [6.2, 4.5, 1.15],
     spot: 'Two tables back, 4.5 m from the stack',
     speakers: [[10.2, 6.3, 2.05], [10.2, 2.7, 2.05]],
-    spread: 1.3, irSeconds: 0.9, trimDb: 0,
+    spread: 1.3, irSeconds: 0.6, trimDb: 0,
   },
   {
     id: 'hall',
@@ -1227,11 +1240,11 @@ const VENUES = [
     note: 'Plaster and wood, a full house, the long even decay these rooms are built for.',
     system: 'hallRig',
     dims: [45, 22, 17],
-    materials: { xMin: 'woodPanel', xMax: 'woodPanel', yMin: 'woodPanel', yMax: 'plaster', floor: 'audience', ceiling: 'plaster' },
+    materials: { xMin: 'hallPanel', xMax: 'woodPanel', yMin: 'hallPanel', yMax: 'hallPanel', floor: 'audience', ceiling: 'plaster' },
     listener: [23, 11, 1.35],
     spot: 'Mid-stalls, 18 m from the stage',
     speakers: [[41, 14.6, 3.2], [41, 7.4, 3.2]],
-    spread: 1.1, irSeconds: 3.7, trimDb: 0,
+    spread: 1.1, irSeconds: 2.6, trimDb: 0,
   },
   {
     id: 'church',
@@ -1259,7 +1272,8 @@ const VENUES = [
     listener: [13, 8, 1.6],
     spot: 'Out on the floor, 9 m from the stacks',
     speakers: [[21.5, 11.6, 2.6], [21.5, 4.4, 2.6]],
-    spread: 1.6, irSeconds: 2.0, trimDb: 0,
+    spread: 1.6, irSeconds: 1.2, trimDb: 0,
+    cardioidSubs: true,
   },
   {
     id: 'stadium',
@@ -1274,6 +1288,7 @@ const VENUES = [
     speakers: [[150, 100, 27], [150, 40, 27]],
     spread: 2.1, irSeconds: 2.7, trimDb: 0,
     airComp: true,
+    cardioidSubs: true,
   },
   {
     id: 'field',
@@ -1286,13 +1301,14 @@ const VENUES = [
     listener: [160, 150, 1.65],
     spot: 'In the crowd, 74 m from the stage',
     speakers: [[232, 166, 8.5], [232, 134, 8.5]],
-    spread: 2.1, irSeconds: 1.0, trimDb: 0,
+    spread: 2.1, irSeconds: 0.8, trimDb: 0,
     airComp: true,
+    cardioidSubs: true,
     // No walls means no reverberant field. What little decay there is comes off
     // the crowd and the distant site structures, so it is stated rather than
     // derived — Eyring has nothing to work with out here.
     diffuse: 1,
-    rt60Override: [0.80, 0.68, 0.55, 0.44, 0.34, 0.25, 0.18],
+    rt60Override: [0.55, 0.50, 0.44, 0.38, 0.30, 0.22, 0.16],
     diffuseRefDb: -21,
   },
   {
@@ -1788,6 +1804,7 @@ async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {}) {
       diffuse: venue.diffuse ?? 1,
       rt60Override: venue.rt60Override ?? null,
       diffuseRefDb: venue.diffuseRefDb ?? null,
+      directivityP: venue.cardioidSubs ? CARDIOID_SUB_P : DIRECTIVITY_P,
       sampleRate,
       irSeconds,
       leadTrim,

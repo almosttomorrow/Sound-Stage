@@ -136,13 +136,23 @@ function pinnaGains(forward, up, out) {
 /** Exponents of a ((1+cos b)/2)^p pattern per band: near-omni in the bass,
  *  strongly beamed at 8 kHz — the reason a room's reflections are duller than
  *  the sound arriving straight at you. */
-const DIRECTIVITY_P = [0.15, 0.3, 0.6, 1.1, 1.8, 2.6, 3.4];
+export const DIRECTIVITY_P = [0.15, 0.3, 0.6, 1.1, 1.8, 2.6, 3.4];
+
+/**
+ * Cardioid sub arrays. A plain subwoofer is very nearly omnidirectional, which
+ * is why a big rig booms a room out: half its low end goes into the walls. A
+ * cardioid array — rear boxes delayed and polarity-flipped — cancels most of
+ * what would go backwards, and is standard on any modern system. Modelled by
+ * giving the bottom three bands the directivity the mids already have.
+ */
+export const CARDIOID_SUB_P = [1.1, 1.1, 0.9, 1.1, 1.8, 2.6, 3.4];
+
 const DIRECTIVITY_FLOOR = 0.06;
 
-function directivityGains(cosBeta, spread, out) {
+function directivityGains(cosBeta, spread, out, pExp) {
   const x = Math.max(0, (1 + cosBeta) / 2);
   for (let b = 0; b < NBANDS; b++) {
-    const p = DIRECTIVITY_P[b] * spread;
+    const p = pExp[b] * spread;
     out[b] = DIRECTIVITY_FLOOR + (1 - DIRECTIVITY_FLOOR) * Math.pow(x, p);
   }
   return out;
@@ -155,7 +165,7 @@ function directivityGains(cosBeta, spread, out) {
  * Returns the number of reflections actually placed.
  */
 function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
-  const { dims, listener, yaw, source, aim, spread, beta, scat, tMix, irSeconds, t0, leadTrim } = cfg;
+  const { dims, listener, yaw, source, aim, spread, beta, scat, tMix, irSeconds, t0, leadTrim, directivityP } = cfg;
   const [Lx, Ly, Lz] = dims;
 
   const fwdVec = [Math.cos(yaw), Math.sin(yaw), 0];
@@ -235,7 +245,7 @@ function renderImageSources(cfg, bandBuf, sampleRate, rnd) {
 
               // Emission angle: the source's aim is mirrored along with it.
               const aimImg = [sx * aim[0], sy * aim[1], sz * aim[2]];
-              directivityGains(-dot(aimImg, dirUnit), spread, dirG);
+              directivityGains(-dot(aimImg, dirUnit), spread, dirG, directivityP);
 
               // Sample positions are measured from the moment the sound first
               // reaches the listener, not from when it left the speaker: the
@@ -408,6 +418,7 @@ export async function renderSpeakerBRIR(opts) {
     dims, materials, listener, yaw, source, aim,
     spread = 1, sampleRate, irSeconds, seed = 1,
     diffuse = 1, rt60Override = null, diffuseRefDb = null, leadTrim = 0,
+    directivityP = DIRECTIVITY_P,
   } = opts;
 
   const rnd = mulberry32(seed);
@@ -428,7 +439,7 @@ export async function renderSpeakerBRIR(opts) {
     dims, listener, yaw, source, aim, spread,
     beta: reflectionCoefficients(materials),
     scat: scatterCoefficients(materials),
-    rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb, leadTrim,
+    rt60, tMix, irSeconds, t0, diffuse, diffuseRefDb, leadTrim, directivityP,
   };
 
   const ism = renderImageSources(cfg, bandBuf, sampleRate, rnd);

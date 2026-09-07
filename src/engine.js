@@ -17,7 +17,7 @@
  * a real pair of speakers in a real room does to a stereo recording.
  */
 
-import { renderSpeakerBRIR } from './brir.js';
+import { renderSpeakerBRIR, DIRECTIVITY_P, CARDIOID_SUB_P } from './brir.js';
 import { SYSTEMS } from './venues.js';
 import { clamp, dbToGain, AIR_ABSORPTION_DB_M, C_AIR } from './acoustics.js';
 
@@ -473,6 +473,7 @@ export async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {
       diffuse: venue.diffuse ?? 1,
       rt60Override: venue.rt60Override ?? null,
       diffuseRefDb: venue.diffuseRefDb ?? null,
+      directivityP: venue.cardioidSubs ? CARDIOID_SUB_P : DIRECTIVITY_P,
       sampleRate,
       irSeconds,
       leadTrim,

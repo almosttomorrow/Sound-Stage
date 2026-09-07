@@ -103,6 +103,31 @@ than calculated, because the honest answer depends on the spectrum of the
 material — a room with a long bass decay adds far more to a bass-heavy record
 than a flat energy sum would predict.
 
+### Every room gets the same test
+
+"Best case" is easy to claim and easy to fake, so it is checked against a
+number. Beranek's **bass ratio** — (RT125 + RT250) / (RT500 + RT1k) — is what
+separates a warm room from a boomy one; the great concert halls measure
+1.1–1.25, and a treated control room sits near 1.0. Auditing all nine found
+four rooms that were not best case at all, only average ones:
+
+| Room | Was | Now | What fixed it |
+|---|---|---|---|
+| Control Room | 2.22 | 1.29 | Deep porous absorbers over an air gap, instead of thin panels that do nothing below 200 Hz |
+| Jazz Club | 1.86 | 1.29 | Real depth in the ceiling treatment; the brick stays, it is the whole character |
+| Concert Hall | 1.44 | 1.17 | Thin timber panelling over a cavity — how the great halls actually get their bass ratio down |
+| Nightclub | 2.17 | 1.47 | Bass traps in the ceiling, and cardioid subs |
+
+A control room with a 2.2 bass ratio is not a reference, it is the modal boom
+that treatment exists to remove. A club whose bass hangs on for 1.8 seconds
+cannot make a kick drum land, whatever the copy says.
+
+The three rooms with a big low end — nightclub, stadium, field — now also run
+**cardioid sub arrays**. A plain subwoofer is nearly omnidirectional, so half
+its low end goes into the walls; delaying and flipping the rear boxes cancels
+most of that. It is standard on any modern rig and it is why a good one does
+not boom the room out.
+
 ### The church, in particular
 
 It is the room the whole idea is really for, so it gets the most attention. Its
@@ -140,13 +165,13 @@ a stadium — so the app decides, rather than handing over a distance slider.
 | Room | Size | Where you are | Decay (500 Hz–1 kHz) | System |
 |---|---|---|---|---|
 | Control Room | 6.5 × 4.8 × 3.0 m | Sweet spot, 1.6 m back | 0.13 s | Tuned nearfields |
-| Living Room | 7.5 × 5.0 × 2.7 m | On the sofa, 3.2 m back | 0.34 s | Well-placed hi-fi pair |
-| Jazz Club | 12 × 9 × 3.2 m | Two tables back, 4.5 m | 0.32 s | Tuned club PA with subs |
-| Concert Hall | 45 × 22 × 17 m | Mid-stalls, 18 m | 2.2 s | Discreet reinforcement |
+| Living Room | 7.5 × 5.0 × 2.7 m | On the sofa, 3.2 m back | 0.30 s | Well-placed hi-fi pair |
+| Jazz Club | 12 × 9 × 3.2 m | Two tables back, 4.5 m | 0.31 s | Tuned club PA with subs |
+| Concert Hall | 45 × 22 × 17 m | Mid-stalls, 18 m | 1.95 s | Discreet reinforcement |
 | Stone Church | 30 × 14 × 15 m | Ten rows back, 10 m from the array | 4.1 s | Steered column array with subs |
-| Nightclub | 24 × 16 × 5.5 m | On the floor, 9 m from the stacks | 0.67 s | Tuned club rig, horn subs |
+| Nightclub | 24 × 16 × 5.5 m | On the floor, 9 m from the stacks | 0.58 s | Tuned club rig, cardioid subs |
 | Stadium | 190 × 140 m, open | Middle of the bowl, 67 m | 1.3 s | Flown array + 6 dB air compensation |
-| Open Air Field | no walls | In the crowd, 74 m | 0.49 s | Flown array + 6 dB air compensation |
+| Open Air Field | no walls | In the crowd, 74 m | 0.41 s | Flown array + 6 dB air compensation |
 | Car | 2.4 × 1.6 × 1.15 m | Driver's seat, nothing centred | 0.08 s | Properly tuned car system |
 
 Responses are built on the device when you pick a room — 40 ms to 700 ms
