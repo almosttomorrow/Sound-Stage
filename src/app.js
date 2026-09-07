@@ -2,9 +2,8 @@
  * app.js — interface wiring.
  *
  * Everything the page shows about a room is measured from the response the app
- * has just built: the decay curve is that impulse response, the band chart is
- * its Eyring decay times, the arrival time is the real flight time from the
- * loudspeaker to the seat. Nothing here is illustrative.
+ * has just built: the decay curve is that impulse response, the reverb time is
+ * its Eyring decay. Nothing here is illustrative.
  */
 
 import { VENUES, venueById, SYSTEMS } from './venues.js';
@@ -22,6 +21,8 @@ const state = {
   report: null,
   playing: false,
 };
+
+const isTouch = window.matchMedia('(pointer: coarse)').matches;
 
 /* ------------------------------------------------------------------ toast */
 
@@ -41,6 +42,8 @@ function midDecay(v) {
   return (rt[2] + rt[3]) / 2;
 }
 
+const fmtSeconds = (t) => (t < 1 ? t.toFixed(2) : t.toFixed(1));
+
 function buildVenueTiles() {
   const host = $('venues');
   host.innerHTML = '';
@@ -50,10 +53,15 @@ function buildVenueTiles() {
     b.className = 'venue';
     b.setAttribute('aria-pressed', String(v.id === state.venue.id));
     b.dataset.id = v.id;
-    const rt = midDecay(v);
-    b.innerHTML = `<h3>${v.name}</h3><span class="rt">${rt < 1 ? rt.toFixed(2) : rt.toFixed(1)} s decay</span>`;
+    b.innerHTML = `<h3>${v.name}</h3><span class="rt">${fmtSeconds(midDecay(v))} s reverb</span>`;
     b.addEventListener('click', () => selectVenue(v.id));
     host.appendChild(b);
+  }
+}
+
+function setTileBusy(id, busy) {
+  for (const el of document.querySelectorAll('.venue')) {
+    el.classList.toggle('building', busy && el.dataset.id === id);
   }
 }
 
@@ -64,29 +72,30 @@ let pending = null;
 
 async function refreshRoom() {
   const token = ++renderToken;
+  const venue = state.venue;
   $('plot').classList.add('busy');
-  const sampleRate = stage.ctx ? stage.ctx.sampleRate : 48000;
+  setTileBusy(venue.id, true);
 
   try {
     const opts = { quality: state.quality };
-    let report;
-    if (stage.ready) {
-      report = await stage.loadVenue(state.venue, opts);
-    } else {
-      report = (await renderVenue(state.venue, { ...opts, sampleRate })).report;
-    }
-    if (token !== renderToken) return;
+    const report = stage.ready
+      ? await stage.loadVenue(venue, opts)
+      : (await renderVenue(venue, { ...opts, sampleRate: 48000 })).report;
+    if (token !== renderToken || !report) return;
     state.report = report;
     paintRoom(report);
   } catch (err) {
     console.error(err);
-    say('The room could not be built on this device.');
+    say('That room couldn’t be built on this device.');
   } finally {
-    if (token === renderToken) $('plot').classList.remove('busy');
+    if (token === renderToken) {
+      $('plot').classList.remove('busy');
+      setTileBusy(venue.id, false);
+    }
   }
 }
 
-function scheduleRefresh(delay = 180) {
+function scheduleRefresh(delay = 0) {
   clearTimeout(pending);
   pending = setTimeout(refreshRoom, delay);
 }
@@ -113,15 +122,15 @@ function paintVenueText() {
 
 function paintRoom(report) {
   const rtMid = (report.rt60[2] + report.rt60[3]) / 2;
-  $('r-rt').innerHTML = `${rtMid < 1 ? rtMid.toFixed(2) : rtMid.toFixed(1)}<small> s</small>`;
+  $('r-rt').innerHTML = `${fmtSeconds(rtMid)}<small> s</small>`;
 
   // One thing worth knowing about every room, taken from its own numbers:
   // low frequencies almost always outlast high ones, and by how much is most
   // of what separates a warm room from a bright one.
   const ratio = report.rt60[0] / Math.max(report.rt60[6], 0.01);
   $('lesson').innerHTML = ratio >= 1.2
-    ? `Low notes hang on <b>${ratio.toFixed(1)}×</b> longer here than the top end.`
-    : 'The decay is even right across the spectrum here.';
+    ? `Bass notes linger <b>${ratio.toFixed(1)}×</b> longer than treble in here.`
+    : 'Bass and treble fade at about the same rate in here.';
 
   drawDecay(report);
 }
@@ -159,7 +168,6 @@ function drawDecay(report) {
   const direct = css('--direct') || '#4fc8d9';
   const tail = css('--tail') || '#e4703a';
 
-  // grid
   cx.strokeStyle = line;
   cx.lineWidth = 1;
   cx.font = "9px 'IBM Plex Mono', monospace";
@@ -171,7 +179,6 @@ function drawDecay(report) {
     cx.fillText(`${d}`, padL - 5, yy + 3);
   }
 
-  // time ticks
   cx.textAlign = 'center';
   const step = seconds > 3 ? 1 : seconds > 1.2 ? 0.5 : seconds > 0.5 ? 0.2 : 0.1;
   for (let t = step; t < seconds; t += step) {
@@ -254,11 +261,12 @@ function setBypass(on) {
   state.bypass = on;
   stage.setBypass(on);
   ab.dataset.on = String(on);
-  ab.textContent = on ? 'Raw file — no room' : 'Hold to hear it dry';
+  ab.textContent = on ? 'Original — no room' : 'Hold to hear the original';
 }
 ab.addEventListener('pointerdown', (e) => { e.preventDefault(); setBypass(true); });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) =>
   ab.addEventListener(ev, () => setBypass(false)));
+ab.addEventListener('contextmenu', (e) => e.preventDefault());
 ab.addEventListener('keydown', (e) => {
   if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setBypass(true); }
 });
@@ -274,38 +282,62 @@ async function afterSourceReady(kind, name) {
   $('now-kind').textContent = kind;
   $('now-name').textContent = name;
   $('transport').style.display = stage.mediaEl ? '' : 'none';
+  $('pick-file').textContent = 'Choose a different song';
+  $('pick-file').classList.remove('primary');
   stage.setVolume(state.volume);
   stage.setBypass(state.bypass);
   await refreshRoom();
   meterLoop();
 }
 
-$('pick-file').addEventListener('click', () => $('file-input').click());
-
-$('file-input').addEventListener('change', async (e) => {
-  const file = e.target.files?.[0];
+async function loadFile(file) {
   if (!file) return;
   try {
-    say('Reading the file…', 1500);
+    say('Opening the song…', 1500);
     const el = await stage.useFile(file);
+    $('now-name').textContent = file.name.replace(/\.[^.]+$/, '');
     wireTransport(el);
-    await afterSourceReady('File', file.name);
+    await afterSourceReady('Song', $('now-name').textContent);
+    await tryPlay(el);
+  } catch (err) {
+    console.warn(err.message);
+    say(err.message || 'That song couldn’t be played.');
+  }
+}
+
+/** Autoplay rules differ by browser; if play is refused, the play button is right there. */
+async function tryPlay(el) {
+  try {
+    await stage.start();
     await el.play();
     setPlaying(true);
   } catch (err) {
-    console.error(err);
-    say(err.message || 'That file could not be played.');
+    setPlaying(false);
+    if (err?.name === 'NotAllowedError') say('Tap play to start.');
+    else throw err;
   }
+}
+
+// Waking the audio engine on the button tap — a guaranteed user gesture —
+// rather than on the file picker's change event, which some browsers do not
+// count as one.
+$('pick-file').addEventListener('click', () => {
+  stage.start().catch(() => {});
+  $('file-input').click();
+});
+$('file-input').addEventListener('change', (e) => {
+  loadFile(e.target.files?.[0]);
+  e.target.value = '';
 });
 
 $('pick-capture').addEventListener('click', async () => {
   try {
     await stage.useSystemAudio();
-    await afterSourceReady('Captured', 'Shared tab or screen');
-    say('Anything that tab plays now goes through the room.');
+    await afterSourceReady('Browser tab', 'Whatever that tab is playing');
+    say('That tab now plays through the room.');
   } catch (err) {
     console.error(err);
-    if (err.name !== 'NotAllowedError') say(err.message || 'Capture is not available here.');
+    if (err.name !== 'NotAllowedError') say(err.message || 'Couldn’t capture that tab.');
   }
 });
 
@@ -313,11 +345,25 @@ $('pick-mic').addEventListener('click', async () => {
   try {
     await stage.useMicrophone();
     await afterSourceReady('Live', 'Microphone or line input');
-    say('Live input is running. Keep the volume sensible.');
+    say('Live input is on. Keep the volume sensible.');
   } catch (err) {
     console.error(err);
-    if (err.name !== 'NotAllowedError') say('No input device was available.');
+    if (err.name !== 'NotAllowedError') say('No input device was found.');
   }
+});
+
+// Drag a file anywhere on the page.
+let dragDepth = 0;
+document.addEventListener('dragenter', (e) => { e.preventDefault(); dragDepth++; document.body.classList.add('dropping'); });
+document.addEventListener('dragover', (e) => { e.preventDefault(); });
+document.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dropping'); } });
+document.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  document.body.classList.remove('dropping');
+  const file = [...(e.dataTransfer?.files || [])].find((f) => f.type.startsWith('audio/') || /\.(mp3|m4a|aac|wav|flac|ogg|opus|aiff?)$/i.test(f.name));
+  if (file) { stage.start().catch(() => {}); loadFile(file); }
+  else say('Drop a song file — MP3, M4A, WAV or FLAC.');
 });
 
 /* ------------------------------------------------------------- transport */
@@ -329,6 +375,7 @@ function setPlaying(on) {
   state.playing = on;
   $('play-icon').firstElementChild?.setAttribute('d', on ? PAUSE_PATH : PLAY_PATH);
   $('play').setAttribute('aria-label', on ? 'Pause' : 'Play');
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = on ? 'playing' : 'paused';
   if (on) meterLoop();
 }
 
@@ -341,10 +388,11 @@ function fmt(t) {
 let scrubbing = false;
 
 function wireTransport(el) {
-  $('play').onclick = async () => {
-    if (el.paused) { await stage.start(); await el.play(); setPlaying(true); }
+  const toggle = async () => {
+    if (el.paused) await tryPlay(el);
     else { el.pause(); setPlaying(false); }
   };
+  $('play').onclick = toggle;
   el.addEventListener('timeupdate', () => {
     if (scrubbing || !el.duration) return;
     $('scrub').value = String(Math.round((el.currentTime / el.duration) * 1000));
@@ -353,12 +401,44 @@ function wireTransport(el) {
   el.addEventListener('ended', () => setPlaying(false));
   el.addEventListener('pause', () => setPlaying(false));
   el.addEventListener('play', () => setPlaying(true));
-  $('scrub').oninput = () => { scrubbing = true; };
+  $('scrub').oninput = (e) => {
+    scrubbing = true;
+    if (el.duration) $('time').textContent = `${fmt((Number(e.target.value) / 1000) * el.duration)} / ${fmt(el.duration)}`;
+  };
   $('scrub').onchange = (e) => {
     scrubbing = false;
     if (el.duration) el.currentTime = (Number(e.target.value) / 1000) * el.duration;
   };
+
+  // Lock-screen and headphone-button controls, and a hint to the phone that
+  // this is music rather than a sound effect.
+  if ('mediaSession' in navigator) {
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: $('now-name').textContent || 'Sound Stage',
+        artist: `Sound Stage · ${state.venue.name}`,
+      });
+      navigator.mediaSession.setActionHandler('play', () => tryPlay(el));
+      navigator.mediaSession.setActionHandler('pause', () => { el.pause(); setPlaying(false); });
+      navigator.mediaSession.setActionHandler('seekbackward', () => { el.currentTime = Math.max(0, el.currentTime - 10); });
+      navigator.mediaSession.setActionHandler('seekforward', () => { el.currentTime = Math.min(el.duration || 0, el.currentTime + 10); });
+    } catch (_) {}
+  }
+
+  document.onkeydown = (e) => {
+    if (e.key !== ' ' || e.target.closest('button, input, textarea, summary')) return;
+    e.preventDefault();
+    toggle();
+  };
 }
+
+// Coming back from another app or a locked screen, the audio engine may have
+// been put to sleep underneath a media element that thinks it is still playing.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && stage.ctx && stage.mediaEl && !stage.mediaEl.paused) {
+    stage.start().catch(() => {});
+  }
+});
 
 /* ---------------------------------------------------------------- metering */
 
@@ -382,6 +462,12 @@ function meterLoop() {
 /* -------------------------------------------------------------------- boot */
 
 function boot() {
+  // Only offer what this device can actually do.
+  if (!navigator.mediaDevices?.getDisplayMedia) $('pick-capture').hidden = true;
+  // A phone's microphone through headphones is not a use anyone wants, and on
+  // Bluetooth it drops the whole headset into low-quality call mode.
+  if (isTouch || !navigator.mediaDevices?.getUserMedia) $('pick-mic').hidden = true;
+
   buildVenueTiles();
   paintVenueText();
   $('transport').style.display = 'none';

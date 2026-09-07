@@ -164,15 +164,15 @@ a stadium — so the app decides, rather than handing over a distance slider.
 
 | Room | Size | Where you are | Decay (500 Hz–1 kHz) | System |
 |---|---|---|---|---|
-| Control Room | 6.5 × 4.8 × 3.0 m | Sweet spot, 1.6 m back | 0.13 s | Tuned nearfields |
-| Living Room | 7.5 × 5.0 × 2.7 m | On the sofa, 3.2 m back | 0.30 s | Well-placed hi-fi pair |
-| Jazz Club | 12 × 9 × 3.2 m | Two tables back, 4.5 m | 0.31 s | Tuned club PA with subs |
-| Concert Hall | 45 × 22 × 17 m | Mid-stalls, 18 m | 1.95 s | Discreet reinforcement |
-| Stone Church | 30 × 14 × 15 m | Ten rows back, 10 m from the array | 4.1 s | Steered column array with subs |
-| Nightclub | 24 × 16 × 5.5 m | On the floor, 9 m from the stacks | 0.58 s | Tuned club rig, cardioid subs |
-| Stadium | 190 × 140 m, open | Middle of the bowl, 67 m | 1.3 s | Flown array + 6 dB air compensation |
-| Open Air Field | no walls | In the crowd, 74 m | 0.41 s | Flown array + 6 dB air compensation |
-| Car | 2.4 × 1.6 × 1.15 m | Driver's seat, nothing centred | 0.08 s | Properly tuned car system |
+| Control Room | 6.5 × 4.8 × 3.0 m | Sweet spot, 1.6 m back | 0.13 s | Studio monitors |
+| Living Room | 7.5 × 5.0 × 2.7 m | On the sofa, 3.2 m back | 0.30 s | Good hi-fi speakers |
+| Jazz Club | 12 × 9 × 3.2 m | Two tables back, 4.5 m | 0.31 s | Small club PA with subs |
+| Concert Hall | 45 × 22 × 17 m | Mid-stalls, 18 m | 1.95 s | Subtle concert-hall PA |
+| Stone Church | 30 × 14 × 15 m | Ten rows back, 10 m from the speakers | 4.1 s | Steered column speakers + subs |
+| Nightclub | 24 × 16 × 5.5 m | On the dance floor, 9 m | 0.58 s | Club rig with big (cardioid) subs |
+| Stadium | 190 × 140 m, open | Middle of the crowd, 67 m | 1.3 s | Concert line array + 6 dB air compensation |
+| Open Air Field | no walls | In the crowd, 74 m | 0.41 s | Concert line array + 6 dB air compensation |
+| Car | 2.4 × 1.6 × 1.15 m | Driver's seat, nothing centred | 0.08 s | Tuned car speakers |
 
 Responses are built on the device when you pick a room — 40 ms to 700 ms
 depending on how long its decay is.
@@ -202,6 +202,29 @@ self-contained file with no dependencies.
 | `src/app.js` | Interface, reflectogram plot |
 | `build.js` | Single-file bundler |
 
+## On a phone
+
+The file path is the one that matters, so it has had the attention:
+
+- The audio engine wakes on the **tap of the button**, a guaranteed user
+  gesture, rather than on the file picker's change event, which some browsers
+  do not count as one. If a browser still refuses to autoplay, the play button
+  is right there and a toast says so.
+- iOS reports `interrupted` rather than `suspended` after a phone call or a
+  trip to another app; the engine resumes on anything that is not `running`,
+  and again when the page becomes visible with a track still marked playing.
+- Lock-screen and headphone-button controls work through the Media Session
+  API, which also tells the phone this is music rather than a sound effect.
+- Switching rooms renders and level-matches the new room while the old one
+  keeps playing, then swaps with a 25 ms dip. A room you clicked away from
+  before it finished is dropped rather than landing on top of the newer one.
+- The microphone source is hidden on touch devices: a phone's mic through
+  headphones is not a use anyone wants, and on Bluetooth it drops the whole
+  headset into low-quality call mode. Tab capture is hidden where the browser
+  cannot do it.
+- Unsupported formats get a specific message (Safari cannot play Ogg or Opus).
+  MP3, M4A/AAC, WAV and FLAC work everywhere.
+
 ## Known limits
 
 - Shoebox geometry only. A real church has a vaulted ceiling, side chapels and
@@ -220,3 +243,6 @@ self-contained file with no dependencies.
   you cannot walk to the back of the church to hear what changes.
 - Every venue is its best case by design, so none of these will tell you what a
   badly tuned system sounds like. That was not what it is for.
+- On iOS, Web Audio processing stops when the screen locks. The media element
+  keeps the session alive on recent versions, but this is not something a web
+  page can guarantee; if the room drops out on lock, that is why.

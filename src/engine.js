@@ -22,6 +22,7 @@ import { SYSTEMS } from './venues.js';
 import { clamp, dbToGain, AIR_ABSORPTION_DB_M, C_AIR } from './acoustics.js';
 
 const RAMP = 0.02;
+const SWAP_FADE = 0.025;
 
 /* ------------------------------------------------------- loudspeaker stage */
 
@@ -83,7 +84,31 @@ function makeVoicing(ctx, sys, airCompDb = 0) {
   shaper.curve = driveCurve(sys.drive ?? 0);
   lp.connect(shaper);
 
-  return { input: hp, output: shaper, shaper };
+  return { input: hp, output: shaper };
+}
+
+/** Two convolvers fed from a stereo signal, one per loudspeaker. */
+function makeRoom(ctx, buffers) {
+  const stereoise = ctx.createGain();
+  stereoise.channelCount = 2;
+  stereoise.channelCountMode = 'explicit';
+  stereoise.channelInterpretation = 'speakers';
+  const splitter = ctx.createChannelSplitter(2);
+  const convL = ctx.createConvolver();
+  const convR = ctx.createConvolver();
+  // Levels are set by measurement, not by the node's own normalisation, so
+  // that A/B compares the sound rather than the volume.
+  convL.normalize = false;
+  convR.normalize = false;
+  convL.buffer = buffers[0];
+  convR.buffer = buffers[1];
+  const sum = ctx.createGain();
+  stereoise.connect(splitter);
+  splitter.connect(convL, 0);
+  splitter.connect(convR, 1);
+  convL.connect(sum);
+  convR.connect(sum);
+  return { input: stereoise, output: sum };
 }
 
 /* ------------------------------------------------------- loudness matching */
@@ -171,17 +196,24 @@ export class SoundStage {
     this.sys = null;
     this.airCompDb = 0;
     this.render = null;      // last render report, for the UI
+    this.loadSeq = 0;
+    this.noise = null;       // calibration noise, built once per sample rate
+    this.dryLevel = 0;
+    this.meterBuf = null;
   }
 
+  /** Create or wake the audio context. Must be called from a user gesture the first time. */
   async start() {
-    if (this.ctx) {
-      if (this.ctx.state === 'suspended') await this.ctx.resume();
-      return this.ctx;
+    if (!this.ctx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new Ctx({ latencyHint: 'playback' });
+      this.buildGraph();
     }
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    this.ctx = new Ctx({ latencyHint: 'playback' });
-    if (this.ctx.state === 'suspended') await this.ctx.resume();
-    this.buildGraph();
+    // iOS reports 'interrupted' after a phone call or a trip to another app,
+    // which is not 'suspended' — resume on anything that is not running.
+    if (this.ctx.state !== 'running') {
+      try { await this.ctx.resume(); } catch (_) {}
+    }
     return this.ctx;
   }
 
@@ -195,21 +227,6 @@ export class SoundStage {
     this.dryGain.gain.value = 0;
 
     this.voicingIn = ctx.createGain();
-
-    // Force two channels downstream so mono files still feed both speakers.
-    this.stereoise = ctx.createGain();
-    this.stereoise.channelCount = 2;
-    this.stereoise.channelCountMode = 'explicit';
-    this.stereoise.channelInterpretation = 'speakers';
-
-    this.splitter = ctx.createChannelSplitter(2);
-    this.convL = ctx.createConvolver();
-    this.convR = ctx.createConvolver();
-    // Levels are set by measurement below, not by the node's own normalisation,
-    // so that A/B compares the sound rather than the volume.
-    this.convL.normalize = false;
-    this.convR.normalize = false;
-
     this.roomTrim = ctx.createGain();
     this.roomTrim.gain.value = 0;
     this.wetGain = ctx.createGain();
@@ -228,24 +245,22 @@ export class SoundStage {
     this.analyser = ctx.createAnalyser();
     this.analyser.fftSize = 1024;
     this.analyser.smoothingTimeConstant = 0.6;
+    this.meterBuf = new Float32Array(this.analyser.fftSize);
 
     this.input.connect(this.dryGain);
     this.input.connect(this.voicingIn);
-    this.stereoise.connect(this.splitter);
-    this.splitter.connect(this.convL, 0);
-    this.splitter.connect(this.convR, 1);
-    this.convL.connect(this.roomTrim);
-    this.convR.connect(this.roomTrim);
     this.roomTrim.connect(this.wetGain);
     this.wetGain.connect(this.master);
     this.dryGain.connect(this.master);
     this.master.connect(this.limiter);
-    this.limiter.connect(this.ctx.destination);
+    this.limiter.connect(ctx.destination);
     // The meter reads perceived level, not raw amplitude: it sees the output
     // through the same K-weighting the level matching uses, so a rig with a big
     // low end does not just peg the meter.
     attachLoudnessMeter(ctx, this.limiter).connect(this.analyser);
 
+    this.voicing = null;
+    this.room = null;
     this.ready = true;
   }
 
@@ -256,9 +271,12 @@ export class SoundStage {
     if (this.stream) { this.stream.getTracks().forEach((t) => t.stop()); this.stream = null; }
     if (this.mediaEl) {
       this.mediaEl.pause();
-      URL.revokeObjectURL(this.mediaEl.src);
+      this.mediaEl.removeAttribute('src');
+      this.mediaEl.load();
+      URL.revokeObjectURL(this.mediaUrl);
       this.mediaEl.remove();
       this.mediaEl = null;
+      this.mediaUrl = null;
     }
     this.source = null;
   }
@@ -267,7 +285,8 @@ export class SoundStage {
     await this.start();
     this.disconnectSource();
     const el = new Audio();
-    el.src = URL.createObjectURL(file);
+    this.mediaUrl = URL.createObjectURL(file);
+    el.src = this.mediaUrl;
     el.preload = 'auto';
     // Some mobile browsers refuse to decode a media element that was never
     // attached to the document, so park it off-screen rather than detached.
@@ -276,10 +295,15 @@ export class SoundStage {
     this.mediaEl = el;
     this.source = this.ctx.createMediaElementSource(el);
     this.source.connect(this.input);
-    await new Promise((res, rej) => {
-      el.addEventListener('loadedmetadata', res, { once: true });
-      el.addEventListener('error', () => rej(new Error('That file could not be decoded.')), { once: true });
-    });
+    try {
+      await new Promise((res, rej) => {
+        el.addEventListener('loadedmetadata', res, { once: true });
+        el.addEventListener('error', () => rej(decodeError(file, el)), { once: true });
+      });
+    } catch (err) {
+      this.disconnectSource();
+      throw err;
+    }
     return el;
   }
 
@@ -287,7 +311,7 @@ export class SoundStage {
   async useSystemAudio() {
     await this.start();
     if (!navigator.mediaDevices?.getDisplayMedia) {
-      throw new Error('This browser cannot capture other apps. Play a file instead.');
+      throw new Error('This browser can’t capture other apps. Pick a song file instead.');
     }
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: true,
@@ -295,7 +319,7 @@ export class SoundStage {
     });
     if (stream.getAudioTracks().length === 0) {
       stream.getTracks().forEach((t) => t.stop());
-      throw new Error('No audio came through. Pick a tab and tick "Also share tab audio".');
+      throw new Error('No sound came through. Pick a tab and tick “Also share tab audio”.');
     }
     this.disconnectSource();
     this.stream = stream;
@@ -318,94 +342,114 @@ export class SoundStage {
 
   /* ----------------------------------------------------------------- venue */
 
+  /**
+   * Build a venue and swap it in. The new room is rendered and level-matched
+   * while the old one keeps playing; the swap itself is a 25 ms dip. If a
+   * newer request arrives meanwhile, this one is dropped rather than landing
+   * late on top of it.
+   */
   async loadVenue(venue, opts = {}) {
     await this.start();
+    const seq = ++this.loadSeq;
+
     const { buffers, report } = await renderVenue(venue, { ...opts, sampleRate: this.ctx.sampleRate });
-    this.convL.buffer = buffers[0];
-    this.convR.buffer = buffers[1];
-    this.venue = venue;
-    this.sys = SYSTEMS[venue.system];
-    this.render = report;
+    if (seq !== this.loadSeq) return null;
+
+    const sys = SYSTEMS[venue.system];
     // Capped: you can put six decibels back, not the thirteen the air took,
     // and a real rig would run out of headroom long before that too.
-    this.airCompDb = venue.airComp
+    const airCompDb = venue.airComp
       ? Math.min(6, AIR_ABSORPTION_DB_M[6] * report.distance * 0.75)
       : 0;
-    this.rebuildVoicing();
-    await this.calibrate();
-    return report;
-  }
 
-  rebuildVoicing() {
-    if (!this.sys) return;
-    if (this.voicing) { try { this.voicing.input.disconnect(); this.voicing.output.disconnect(); } catch (_) {} }
-    try { this.voicingIn.disconnect(); } catch (_) {}
-    this.voicing = makeVoicing(this.ctx, this.sys, this.airCompDb);
-    this.voicingIn.connect(this.voicing.input);
-    this.voicing.output.connect(this.stereoise);
+    const trim = await this.calibrate(sys, airCompDb, buffers) * dbToGain(venue.trimDb || 0);
+    if (seq !== this.loadSeq) return null;
+
+    const ctx = this.ctx;
+    const voicing = makeVoicing(ctx, sys, airCompDb);
+    const room = makeRoom(ctx, buffers);
+    voicing.output.connect(room.input);
+
+    // Fade, swap, fade back — one short dip instead of a click.
+    const now = ctx.currentTime;
+    this.wetGain.gain.cancelScheduledValues(now);
+    this.wetGain.gain.setValueAtTime(this.wetGain.gain.value, now);
+    this.wetGain.gain.linearRampToValueAtTime(0, now + SWAP_FADE);
+    await sleep(SWAP_FADE * 1000 + 10);
+    if (seq !== this.loadSeq) return null;
+
+    if (this.voicing) {
+      try { this.voicingIn.disconnect(this.voicing.input); } catch (_) {}
+      try { this.room.output.disconnect(this.roomTrim); } catch (_) {}
+    }
+    this.voicingIn.connect(voicing.input);
+    room.output.connect(this.roomTrim);
+    this.roomTrim.gain.setValueAtTime(trim, ctx.currentTime);
+    this.voicing = voicing;
+    this.room = room;
+
+    const t = ctx.currentTime;
+    this.wetGain.gain.cancelScheduledValues(t);
+    this.wetGain.gain.setValueAtTime(0, t);
+    this.wetGain.gain.linearRampToValueAtTime(this.bypassed ? 0 : 1, t + SWAP_FADE);
+
+    this.venue = venue;
+    this.sys = sys;
+    this.airCompDb = airCompDb;
+    this.render = { ...report, trim };
+    return this.render;
   }
 
   /**
-   * Set the treated path to the same loudness as the bypassed one, by playing
-   * pink noise through an exact copy of the chain and measuring both with a
-   * broadcast loudness filter.
+   * Find the gain that makes the treated path as loud as the bypassed one, by
+   * playing pink noise through an exact copy of the chain and measuring both
+   * with a broadcast loudness filter.
    *
-   * This is measured rather than calculated because the honest answer depends
-   * on the spectrum of the material: a room with a long bass decay adds far
-   * more to a bass-heavy record than a flat energy sum would suggest.
+   * Measured rather than calculated because the honest answer depends on the
+   * spectrum of the material: a room with a long bass decay adds far more to a
+   * bass-heavy record than a flat energy sum would suggest.
    */
-  async calibrate() {
-    if (!this.convL.buffer || !this.sys) return;
+  async calibrate(sys, airCompDb, buffers) {
     const sr = this.ctx.sampleRate;
     const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-    if (!OfflineCtx) return;
+    if (!OfflineCtx) return 1;
 
-    const irSec = Math.min(this.convL.buffer.length / sr, 6);
-    const noiseSec = irSec + 1.5;
-    const totalSec = noiseSec + Math.min(irSec, 2);
-    const len = Math.ceil(totalSec * sr);
-    const pink = pinkStereo(Math.ceil(noiseSec * sr));
+    const NOISE_SEC = 3;
+    const len = Math.ceil(NOISE_SEC * sr);
+    if (!this.noise || this.noise.rate !== sr) {
+      this.noise = { rate: sr, data: pinkStereo(len) };
+      this.dryLevel = 0;
+    }
+
+    // The reverberant field is within 0.1 dB of steady state a third of the way
+    // into the decay, so there is no need to wait for the whole response.
+    const irSec = buffers[0].length / sr;
+    const settle = Math.min(irSec / 3, 2);
 
     const measure = async (treated) => {
       const ctx = new OfflineCtx(2, len, sr);
-      const buf = ctx.createBuffer(2, pink[0].length, sr);
-      buf.copyToChannel(pink[0], 0);
-      buf.copyToChannel(pink[1], 1);
+      const buf = ctx.createBuffer(2, len, sr);
+      buf.copyToChannel(this.noise.data[0], 0);
+      buf.copyToChannel(this.noise.data[1], 1);
       const src = ctx.createBufferSource();
       src.buffer = buf;
-
       let tail = src;
       if (treated) {
-        const v = makeVoicing(ctx, this.sys, this.airCompDb);
+        const v = makeVoicing(ctx, sys, airCompDb);
+        const r = makeRoom(ctx, buffers);
         src.connect(v.input);
-        const st = ctx.createGain();
-        st.channelCount = 2;
-        st.channelCountMode = 'explicit';
-        st.channelInterpretation = 'speakers';
-        v.output.connect(st);
-        const sp = ctx.createChannelSplitter(2);
-        st.connect(sp);
-        const cl = ctx.createConvolver(); cl.normalize = false; cl.buffer = this.convL.buffer;
-        const cr = ctx.createConvolver(); cr.normalize = false; cr.buffer = this.convR.buffer;
-        sp.connect(cl, 0);
-        sp.connect(cr, 1);
-        const sum = ctx.createGain();
-        cl.connect(sum); cr.connect(sum);
-        tail = sum;
+        v.output.connect(r.input);
+        tail = r.output;
       }
       attachLoudnessMeter(ctx, tail).connect(ctx.destination);
       src.start(0);
-      // Measure only once the room has filled: before that the reverberant
-      // field is still building and the level would read low.
-      return rmsWindow(await ctx.startRendering(), irSec, noiseSec);
+      return rmsWindow(await ctx.startRendering(), treated ? settle : 0.1, NOISE_SEC);
     };
 
-    const [wet, dry] = await Promise.all([measure(true), measure(false)]);
-    const g = wet > 1e-9 ? dry / wet : 1;
-    const trim = clamp(g, 0.02, 64) * dbToGain(this.venue?.trimDb || 0);
-    this.roomTrim.gain.setTargetAtTime(trim, this.ctx.currentTime, RAMP);
-    if (this.render) this.render.trim = trim;
-    return trim;
+    // The bypass level never changes for a given sample rate; measure it once.
+    if (!this.dryLevel) this.dryLevel = await measure(false);
+    const wet = await measure(true);
+    return clamp(wet > 1e-9 ? this.dryLevel / wet : 1, 0.02, 64);
   }
 
   /* -------------------------------------------------------------- controls */
@@ -425,12 +469,25 @@ export class SoundStage {
 
   outputLevel() {
     if (!this.analyser) return 0;
-    const buf = new Float32Array(this.analyser.fftSize);
+    const buf = this.meterBuf;
     this.analyser.getFloatTimeDomainData(buf);
     let sum = 0;
     for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
     return Math.sqrt(sum / buf.length);
   }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function decodeError(file, el) {
+  const name = (file.name || '').toLowerCase();
+  const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  if (safari && /\.(ogg|oga|opus|webm)$/.test(name)) {
+    return new Error('Safari can’t play that format. Try an MP3, M4A, WAV or FLAC.');
+  }
+  const code = el.error?.code;
+  if (code === 4) return new Error('That file isn’t a format this browser can play. MP3, M4A, WAV and FLAC all work.');
+  return new Error('That file couldn’t be read. Try another one.');
 }
 
 /* ------------------------------------------------------------ room renders */
@@ -457,12 +514,10 @@ export async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {
   const distances = venue.speakers.map((p) => Math.hypot(p[0] - listener[0], p[1] - listener[1], p[2] - listener[2]));
   const leadTrim = Math.min(...distances) / C_AIR;
 
-  const reports = [];
-  for (let i = 0; i < venue.speakers.length; i++) {
-    const pos = venue.speakers[i];
+  const reports = await Promise.all(venue.speakers.map((pos, i) => {
     const toListener = [listener[0] - pos[0], listener[1] - pos[1], listener[2] - pos[2]];
     const n = Math.hypot(toListener[0], toListener[1], toListener[2]) || 1;
-    reports.push(await renderSpeakerBRIR({
+    return renderSpeakerBRIR({
       dims: venue.dims,
       materials: venue.materials,
       listener,
@@ -478,8 +533,8 @@ export async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {
       irSeconds,
       leadTrim,
       seed: 0x5eed + i * 7717 + venue.id.length * 131,
-    }));
-  }
+    });
+  }));
 
   const buffers = reports.map((r) => r.buffer);
   const out = {
@@ -494,11 +549,7 @@ export async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {
       order: reports[0].order,
       irSeconds,
       sampleRate,
-      distance: Math.hypot(
-        listener[0] - venue.speakers[0][0],
-        listener[1] - venue.speakers[0][1],
-        listener[2] - venue.speakers[0][2],
-      ),
+      distance: distances[0],
       buildMs: Math.round(now() - started),
       decay: decayCurve(buffers[0]),
     },

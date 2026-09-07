@@ -254,6 +254,12 @@ section { padding: 22px 0; border-bottom: 1px solid var(--line-soft); }
   font-variant-numeric: tabular-nums;
 }
 .venue[aria-pressed="true"] .rt { color: var(--tail); }
+.venue.building .rt { color: var(--direct); }
+.venue.building .rt::after { content: ' · building…'; }
+.venue.building { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { border-left-color: var(--direct-dim); } }
+
+body.dropping .wrap { outline: 2px dashed var(--direct); outline-offset: -8px; }
 
 /* ------------------------------------------------------------------ room */
 
@@ -411,21 +417,21 @@ details.notes strong { color: var(--ink-2); }
 
   <header>
     <h1 class="wordmark">Sound<span>&nbsp;Stage</span></h1>
-    <p class="tagline">Play a track through a loudspeaker system, in a room, and listen to it on headphones.</p>
+    <p class="tagline">Hear any song as if it were playing in a real room. Headphones on.</p>
   </header>
 
   <section id="source">
-    <div class="sec-head"><span class="step mono">01</span><p class="eyebrow">Source</p></div>
+    <div class="sec-head"><span class="step mono">01</span><p class="eyebrow">Your music</p></div>
     <div class="btn-row">
-      <button class="btn primary" id="pick-file">Choose an audio file</button>
-      <button class="btn" id="pick-capture">Capture tab audio</button>
-      <button class="btn" id="pick-mic">Live input</button>
+      <button class="btn primary" id="pick-file">Choose a song</button>
+      <button class="btn" id="pick-capture">Use a browser tab</button>
+      <button class="btn" id="pick-mic">Use the microphone</button>
     </div>
-    <input type="file" id="file-input" accept="audio/*" hidden>
+    <input type="file" id="file-input" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aif,.aiff" hidden>
 
     <div class="now" id="now" hidden>
       <div class="now-title">
-        <span class="eyebrow" id="now-kind">File</span>
+        <span class="eyebrow" id="now-kind">Song</span>
         <strong id="now-name">—</strong>
       </div>
       <div class="transport" id="transport">
@@ -438,14 +444,14 @@ details.notes strong { color: var(--ink-2); }
     </div>
 
     <p class="hint" id="source-hint">
-      No app on a phone can reach inside Spotify or Apple Music, so play a file here.
-      On a computer you can share a browser tab instead.
+      Spotify and Apple Music don’t let other apps hear their audio, so pick a song file from your phone or
+      computer. MP3, M4A, WAV and FLAC all work.
     </p>
   </section>
 
   <section id="venue-section">
-    <div class="sec-head"><span class="step mono">02</span><p class="eyebrow">Room</p></div>
-    <div class="venues" id="venues" role="group" aria-label="Choose a room"></div>
+    <div class="sec-head"><span class="step mono">02</span><p class="eyebrow">Pick a room</p></div>
+    <div class="venues" id="venues" role="group" aria-label="Pick a room"></div>
   </section>
 
   <section id="room">
@@ -460,23 +466,23 @@ details.notes strong { color: var(--ink-2); }
 
     <div class="plot" id="plot">
       <canvas id="decay" width="1200" height="320" role="img"
-              aria-label="How the sound in this room dies away over time"></canvas>
+              aria-label="How sound fades away in this room"></canvas>
       <div class="plot-legend">
-        <span><i style="background:var(--direct)"></i>Early reflections</span>
-        <span><i style="background:var(--tail)"></i>Reverberant tail</span>
+        <span><i style="background:var(--direct)"></i>Direct sound &amp; first echoes</span>
+        <span><i style="background:var(--tail)"></i>Reverb tail</span>
       </div>
     </div>
 
     <dl class="readouts">
-      <div class="readout"><dt>Decay</dt><dd id="r-rt">0.34<small> s</small></dd></div>
-      <div class="readout"><dt>System</dt><dd class="name" id="r-sys">Well-placed hi-fi pair</dd></div>
+      <div class="readout"><dt>Reverb</dt><dd id="r-rt">0.30<small> s</small></dd></div>
+      <div class="readout"><dt>Speakers</dt><dd class="name" id="r-sys">Good hi-fi speakers</dd></div>
     </dl>
 
-    <p class="lesson" id="lesson">Low notes hang on 1.8× longer than the top.</p>
+    <p class="lesson" id="lesson">Bass notes linger 1.9× longer than treble in here.</p>
   </section>
 
   <section id="controls-section">
-    <div class="sec-head"><span class="step mono">03</span><p class="eyebrow">Output</p></div>
+    <div class="sec-head"><span class="step mono">03</span><p class="eyebrow">Listen</p></div>
     <div class="controls">
       <div class="ctl">
         <div class="ctl-top"><label for="vol">Volume</label><span class="val mono" id="vol-val">85 %</span></div>
@@ -486,50 +492,38 @@ details.notes strong { color: var(--ink-2); }
     </div>
 
     <details class="notes">
-      <summary>What this is actually doing, and why Spotify can't be piped through it</summary>
-      <p><strong>The model.</strong> Each room is a real shoebox in metres with real surface materials. The app traces
-        the direct sound and every early reflection off those surfaces with an image-source model, in seven octave
-        bands, then continues the decay with a diffuse tail whose reverberation time comes out of the Eyring equation
-        for that room. Each reflection is placed at both of your ears separately, with the timing and the
-        frequency-dependent shadowing a head of that size would cause. That is what makes the room appear outside your
-        head rather than between your ears. The loudspeaker voicing is applied <em>before</em> the room, in the order
-        reality does it.</p>
-      <p><strong>The source.</strong> Nothing running on a phone can read the audio coming out of another app.
-        On iOS there is no system-audio capture at all, and the streaming services encrypt their playback on every
-        platform. So this app has to be the player. Files work everywhere; on a desktop browser you can also share a
-        tab and process whatever it is playing, as long as that tab is not using DRM.</p>
-      <p><strong>Every room is the best version of itself.</strong> Not an average stadium with a rung-out PA — a
-        properly flown array that a system engineer has actually tuned, in a room with the treatment a good example
-        of it would have. The distant rigs even get the high end shelved back up to replace what ninety metres of
-        air takes out, which is exactly what someone does at front of house. What stays honest is the physics: the
-        size, the distance, the decay. A stadium is still a stadium.</p>
-      <p><strong>Where you stand is part of the room.</strong> There is an obvious place to be in each of these
-        rooms — the sweet spot in a control room, the middle of the bowl in a stadium — so the app puts you there
-        rather than asking. How hard each system is driven is set the same way: a club rig is wide open, a pair of
-        studio monitors is not.</p>
-      <p><strong>One thing is deliberately not real.</strong> Sound takes two tenths of a second to cross a stadium,
-        and the model knows it — but nobody wants to wait through that every time they press play, so the flight
-        time is trimmed off the front. The far smaller gap <em>between</em> the two speakers is kept, because that
-        is what places the stereo image.</p>
-      <p><strong>If it stutters.</strong>
-        <span class="seg" role="group" aria-label="Response length" id="quality">
-          <button type="button" data-q="0.55" aria-pressed="false">Light</button>
+      <summary>How it works, and why it can’t use Spotify</summary>
+      <p><strong>Every room is real.</strong> Each one has real measurements — how big it is, what the walls are
+        made of, where the speakers hang and where you’re standing. The app works out how sound bounces around
+        that space and how it reaches each of your ears a fraction differently. That difference is what makes
+        it feel like you’re <em>in</em> the room rather than listening to an effect.</p>
+      <p><strong>Every room is the best version of itself.</strong> Not an average stadium with a tired PA — a
+        properly tuned system in a room that’s been looked after. The size, the distance and the reverb are all
+        honest. The gear is as good as it gets.</p>
+      <p><strong>You’re always in the best spot.</strong> The sweet spot in a studio, the middle of the crowd
+        in a stadium. Nothing to fiddle with.</p>
+      <p><strong>One small cheat.</strong> Sound takes a fifth of a second to cross a stadium. We skip that wait
+        so the music starts the moment you press play.</p>
+      <p><strong>Why not Spotify?</strong> Spotify and Apple Music lock their audio so no other app can touch it.
+        That’s true on every phone, so this app has to play the music itself. On a computer you can also
+        share a browser tab, as long as it isn’t a locked-down player.</p>
+      <p><strong>If it stutters:</strong>
+        <span class="seg" role="group" aria-label="Reverb length" id="quality">
+          <button type="button" data-q="0.55" aria-pressed="false">Shorter</button>
           <button type="button" data-q="1" aria-pressed="true">Full</button>
         </span>
-        Full length uses the whole measured decay. Light halves it, which builds a room about twice as fast on a
-        slower phone.</p>
-      <p><strong>Headphones, please.</strong> The whole point is that you supply the ears. Played on speakers you
-        would be listening to a room inside a room.</p>
+        Shorter trims the reverb tail and is easier on older phones.</p>
+      <p><strong>Use headphones.</strong> On speakers you’d be hearing a room inside a room.</p>
     </details>
   </section>
 </div>
 
 <div class="ab-bar">
   <div class="ab-inner">
-    <button class="ab" id="ab" data-on="false" disabled>Hold to hear it dry</button>
+    <button class="ab" id="ab" data-on="false" disabled>Hold to hear the original</button>
     <div class="meter" aria-hidden="true">
       <div class="meter-track"><div class="meter-fill" id="meter"></div></div>
-      <span>OUT</span>
+      <span>LEVEL</span>
     </div>
   </div>
 </div>
@@ -1139,19 +1133,19 @@ async function renderSpeakerBRIR(opts) {
  */
 const SYSTEMS = {
   monitors: {
-    name: 'Tuned nearfields',
+    name: 'Studio monitors',
     hp: [35, 0.7], lp: [22000, 0.7],
     bands: [[120, 0.8, 0.8], [3000, 0.9, 0.5]],
     drive: 0.0,
   },
   bookshelf: {
-    name: 'Well-placed hi-fi pair',
+    name: 'Good hi-fi speakers',
     hp: [40, 0.75], lp: [21000, 0.7],
     bands: [[70, 0.9, 2.2], [280, 1.0, -1.4], [2800, 0.8, 0.8], [9000, 0.7, 1.6, 'highshelf']],
     drive: 0.015,
   },
   clubPA: {
-    name: 'Tuned club PA with subs',
+    name: 'Small club PA with subs',
     hp: [42, 0.8], lp: [18500, 0.7],
     bands: [[80, 1.0, 2.6], [320, 1.1, -2.0], [2600, 0.9, 1.4], [8000, 0.7, 1.2, 'highshelf']],
     drive: 0.035,
@@ -1162,31 +1156,31 @@ const SYSTEMS = {
     // music stays defined while the room still blooms behind it. Subs are the
     // other half: a stone nave supports low end like nothing else, and a
     // system that stops at 90 Hz throws that away.
-    name: 'Steered column array with subs',
+    name: 'Steered column speakers + subs',
     hp: [38, 0.75], lp: [18500, 0.7],
     bands: [[55, 1.0, 2.4], [315, 1.1, -2.8], [2500, 0.9, 2.0], [8000, 0.7, 1.8, 'highshelf']],
     drive: 0.015,
   },
   hallRig: {
-    name: 'Discreet reinforcement',
+    name: 'Subtle concert-hall PA',
     hp: [32, 0.7], lp: [21000, 0.7],
     bands: [[240, 1.0, -0.8], [3200, 0.8, 0.8]],
     drive: 0.005,
   },
   soundSystem: {
-    name: 'Tuned club rig, horn-loaded subs',
+    name: 'Club rig with big subs',
     hp: [26, 0.7], lp: [18000, 0.7],
     bands: [[42, 1.0, 5.5], [95, 1.1, 2.0], [330, 1.1, -2.4], [2600, 0.9, 1.6], [10000, 0.7, 1.4, 'highshelf']],
     drive: 0.10,
   },
   lineArray: {
-    name: 'Flown line array, system-tuned',
+    name: 'Concert line array',
     hp: [30, 0.75], lp: [18000, 0.7],
     bands: [[45, 1.0, 3.4], [280, 1.1, -2.2], [2400, 0.9, 1.6]],
     drive: 0.05,
   },
   carDoors: {
-    name: 'Properly tuned car system',
+    name: 'Tuned car speakers',
     hp: [40, 0.8], lp: [19000, 0.7],
     bands: [[60, 1.0, 3.0], [300, 1.2, -2.6], [900, 1.4, -1.5], [5000, 0.9, 1.2]],
     drive: 0.03,
@@ -1198,7 +1192,7 @@ const VENUES = [
     id: 'studio',
     name: 'Control Room',
     place: 'Treated control room',
-    note: 'The reference. Almost no room — this is roughly what the mix engineer heard.',
+    note: 'The reference. Almost no room at all — close to what the mix engineer heard.',
     system: 'monitors',
     dims: [6.5, 4.8, 3.0],
     materials: { xMin: 'deepAbsorber', xMax: 'deepAbsorber', yMin: 'deepAbsorber', yMax: 'gypsum', floor: 'woodFloor', ceiling: 'deepAbsorber' },
@@ -1224,12 +1218,12 @@ const VENUES = [
     id: 'jazz',
     name: 'Jazz Club',
     place: 'Brick basement, low ceiling',
-    note: 'Bare brick and a low ceiling, with a small, properly rung PA barely two tables away.',
+    note: 'Bare brick, a low ceiling and a small, well-tuned PA barely two tables away.',
     system: 'clubPA',
     dims: [12, 9, 3.2],
     materials: { xMin: 'audience', xMax: 'brick', yMin: 'brick', yMax: 'woodPanel', floor: 'woodFloor', ceiling: 'deepAbsorber' },
     listener: [6.2, 4.5, 1.15],
-    spot: 'Two tables back, 4.5 m from the stack',
+    spot: 'Two tables back, 4.5 m from the PA',
     speakers: [[10.2, 6.3, 2.05], [10.2, 2.7, 2.05]],
     spread: 1.3, irSeconds: 0.6, trimDb: 0,
   },
@@ -1237,7 +1231,7 @@ const VENUES = [
     id: 'hall',
     name: 'Concert Hall',
     place: 'Shoebox hall, 17 m to the ceiling',
-    note: 'Plaster and wood, a full house, the long even decay these rooms are built for.',
+    note: 'Plaster and wood, a full house, and the long smooth reverb these halls are built for.',
     system: 'hallRig',
     dims: [45, 22, 17],
     materials: { xMin: 'hallPanel', xMax: 'woodPanel', yMin: 'hallPanel', yMax: 'hallPanel', floor: 'audience', ceiling: 'plaster' },
@@ -1250,12 +1244,12 @@ const VENUES = [
     id: 'church',
     name: 'Stone Church',
     place: 'Stone nave, 15 m to the vault',
-    note: 'Four seconds of tail that gets warmer as it falls, and a beam tight enough that the music stays defined inside it.',
+    note: 'Four seconds of reverb that gets warmer as it fades, and speakers aimed tightly enough that the music stays clear inside it.',
     system: 'columnPA',
     dims: [30, 14, 15],
     materials: { xMin: 'woodPanel', xMax: 'stone', yMin: 'stainedGlass', yMax: 'plaster', floor: 'naveSeating', ceiling: 'plaster' },
     listener: [17, 7, 1.3],
-    spot: 'Ten rows back, 10 m from the array',
+    spot: 'Ten rows back, 10 m from the speakers',
     speakers: [[26.5, 9.6, 4.2], [26.5, 4.4, 4.2]],
     // A steered array is far more directional than a plain column, which is
     // exactly what buys the clarity in a room this live.
@@ -1265,12 +1259,12 @@ const VENUES = [
     id: 'club',
     name: 'Nightclub',
     place: 'Concrete room, treated ceiling',
-    note: 'Horn-loaded subs, a treated ceiling, a floor full of people. Tight enough that the kick lands, still big enough to feel.',
+    note: 'Huge subs, a treated ceiling, a floor full of people. Tight enough that the kick hits, big enough to feel.',
     system: 'soundSystem',
     dims: [24, 16, 5.5],
     materials: { xMin: 'audience', xMax: 'concrete', yMin: 'concrete', yMax: 'brick', floor: 'clubFloor', ceiling: 'clubCeiling' },
     listener: [13, 8, 1.6],
-    spot: 'Out on the floor, 9 m from the stacks',
+    spot: 'On the dance floor, 9 m from the speakers',
     speakers: [[21.5, 11.6, 2.6], [21.5, 4.4, 2.6]],
     spread: 1.6, irSeconds: 1.2, trimDb: 0,
     cardioidSubs: true,
@@ -1279,12 +1273,12 @@ const VENUES = [
     id: 'stadium',
     name: 'Stadium',
     place: 'Open bowl, 190 × 140 m',
-    note: 'Sixty-seven metres of air between you and the arrays, with the top end pushed back up to survive the trip.',
+    note: 'Sixty-seven metres of open air between you and the speakers, with the treble boosted to survive the trip.',
     system: 'lineArray',
     dims: [190, 140, 38],
     materials: { xMin: 'audience', xMax: 'audience', yMin: 'audience', yMax: 'audience', floor: 'grass', ceiling: 'openSky' },
     listener: [95, 70, 2],
-    spot: 'Middle of the bowl, 67 m from the arrays',
+    spot: 'Middle of the crowd, 67 m from the speakers',
     speakers: [[150, 100, 27], [150, 40, 27]],
     spread: 2.1, irSeconds: 2.7, trimDb: 0,
     airComp: true,
@@ -1315,7 +1309,7 @@ const VENUES = [
     id: 'car',
     name: 'Car',
     place: 'Saloon cabin',
-    note: 'Door speakers a foot from one ear and three from the other, time-aligned as far as anyone can in a car. Nothing is centred.',
+    note: 'Door speakers a foot from one ear and three from the other. Tuned as well as a car allows — but nothing is centred.',
     system: 'carDoors',
     dims: [2.4, 1.6, 1.15],
     materials: { xMin: 'carTrim', xMax: 'glass', yMin: 'glass', yMax: 'glass', floor: 'carpet', ceiling: 'carTrim' },
@@ -1353,6 +1347,7 @@ const venueById = (id) => VENUES.find((v) => v.id === id) || VENUES[1];
 
 
 const RAMP = 0.02;
+const SWAP_FADE = 0.025;
 
 /* ------------------------------------------------------- loudspeaker stage */
 
@@ -1414,7 +1409,31 @@ function makeVoicing(ctx, sys, airCompDb = 0) {
   shaper.curve = driveCurve(sys.drive ?? 0);
   lp.connect(shaper);
 
-  return { input: hp, output: shaper, shaper };
+  return { input: hp, output: shaper };
+}
+
+/** Two convolvers fed from a stereo signal, one per loudspeaker. */
+function makeRoom(ctx, buffers) {
+  const stereoise = ctx.createGain();
+  stereoise.channelCount = 2;
+  stereoise.channelCountMode = 'explicit';
+  stereoise.channelInterpretation = 'speakers';
+  const splitter = ctx.createChannelSplitter(2);
+  const convL = ctx.createConvolver();
+  const convR = ctx.createConvolver();
+  // Levels are set by measurement, not by the node's own normalisation, so
+  // that A/B compares the sound rather than the volume.
+  convL.normalize = false;
+  convR.normalize = false;
+  convL.buffer = buffers[0];
+  convR.buffer = buffers[1];
+  const sum = ctx.createGain();
+  stereoise.connect(splitter);
+  splitter.connect(convL, 0);
+  splitter.connect(convR, 1);
+  convL.connect(sum);
+  convR.connect(sum);
+  return { input: stereoise, output: sum };
 }
 
 /* ------------------------------------------------------- loudness matching */
@@ -1502,17 +1521,24 @@ class SoundStage {
     this.sys = null;
     this.airCompDb = 0;
     this.render = null;      // last render report, for the UI
+    this.loadSeq = 0;
+    this.noise = null;       // calibration noise, built once per sample rate
+    this.dryLevel = 0;
+    this.meterBuf = null;
   }
 
+  /** Create or wake the audio context. Must be called from a user gesture the first time. */
   async start() {
-    if (this.ctx) {
-      if (this.ctx.state === 'suspended') await this.ctx.resume();
-      return this.ctx;
+    if (!this.ctx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new Ctx({ latencyHint: 'playback' });
+      this.buildGraph();
     }
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    this.ctx = new Ctx({ latencyHint: 'playback' });
-    if (this.ctx.state === 'suspended') await this.ctx.resume();
-    this.buildGraph();
+    // iOS reports 'interrupted' after a phone call or a trip to another app,
+    // which is not 'suspended' — resume on anything that is not running.
+    if (this.ctx.state !== 'running') {
+      try { await this.ctx.resume(); } catch (_) {}
+    }
     return this.ctx;
   }
 
@@ -1526,21 +1552,6 @@ class SoundStage {
     this.dryGain.gain.value = 0;
 
     this.voicingIn = ctx.createGain();
-
-    // Force two channels downstream so mono files still feed both speakers.
-    this.stereoise = ctx.createGain();
-    this.stereoise.channelCount = 2;
-    this.stereoise.channelCountMode = 'explicit';
-    this.stereoise.channelInterpretation = 'speakers';
-
-    this.splitter = ctx.createChannelSplitter(2);
-    this.convL = ctx.createConvolver();
-    this.convR = ctx.createConvolver();
-    // Levels are set by measurement below, not by the node's own normalisation,
-    // so that A/B compares the sound rather than the volume.
-    this.convL.normalize = false;
-    this.convR.normalize = false;
-
     this.roomTrim = ctx.createGain();
     this.roomTrim.gain.value = 0;
     this.wetGain = ctx.createGain();
@@ -1559,24 +1570,22 @@ class SoundStage {
     this.analyser = ctx.createAnalyser();
     this.analyser.fftSize = 1024;
     this.analyser.smoothingTimeConstant = 0.6;
+    this.meterBuf = new Float32Array(this.analyser.fftSize);
 
     this.input.connect(this.dryGain);
     this.input.connect(this.voicingIn);
-    this.stereoise.connect(this.splitter);
-    this.splitter.connect(this.convL, 0);
-    this.splitter.connect(this.convR, 1);
-    this.convL.connect(this.roomTrim);
-    this.convR.connect(this.roomTrim);
     this.roomTrim.connect(this.wetGain);
     this.wetGain.connect(this.master);
     this.dryGain.connect(this.master);
     this.master.connect(this.limiter);
-    this.limiter.connect(this.ctx.destination);
+    this.limiter.connect(ctx.destination);
     // The meter reads perceived level, not raw amplitude: it sees the output
     // through the same K-weighting the level matching uses, so a rig with a big
     // low end does not just peg the meter.
     attachLoudnessMeter(ctx, this.limiter).connect(this.analyser);
 
+    this.voicing = null;
+    this.room = null;
     this.ready = true;
   }
 
@@ -1587,9 +1596,12 @@ class SoundStage {
     if (this.stream) { this.stream.getTracks().forEach((t) => t.stop()); this.stream = null; }
     if (this.mediaEl) {
       this.mediaEl.pause();
-      URL.revokeObjectURL(this.mediaEl.src);
+      this.mediaEl.removeAttribute('src');
+      this.mediaEl.load();
+      URL.revokeObjectURL(this.mediaUrl);
       this.mediaEl.remove();
       this.mediaEl = null;
+      this.mediaUrl = null;
     }
     this.source = null;
   }
@@ -1598,7 +1610,8 @@ class SoundStage {
     await this.start();
     this.disconnectSource();
     const el = new Audio();
-    el.src = URL.createObjectURL(file);
+    this.mediaUrl = URL.createObjectURL(file);
+    el.src = this.mediaUrl;
     el.preload = 'auto';
     // Some mobile browsers refuse to decode a media element that was never
     // attached to the document, so park it off-screen rather than detached.
@@ -1607,10 +1620,15 @@ class SoundStage {
     this.mediaEl = el;
     this.source = this.ctx.createMediaElementSource(el);
     this.source.connect(this.input);
-    await new Promise((res, rej) => {
-      el.addEventListener('loadedmetadata', res, { once: true });
-      el.addEventListener('error', () => rej(new Error('That file could not be decoded.')), { once: true });
-    });
+    try {
+      await new Promise((res, rej) => {
+        el.addEventListener('loadedmetadata', res, { once: true });
+        el.addEventListener('error', () => rej(decodeError(file, el)), { once: true });
+      });
+    } catch (err) {
+      this.disconnectSource();
+      throw err;
+    }
     return el;
   }
 
@@ -1618,7 +1636,7 @@ class SoundStage {
   async useSystemAudio() {
     await this.start();
     if (!navigator.mediaDevices?.getDisplayMedia) {
-      throw new Error('This browser cannot capture other apps. Play a file instead.');
+      throw new Error('This browser can’t capture other apps. Pick a song file instead.');
     }
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: true,
@@ -1626,7 +1644,7 @@ class SoundStage {
     });
     if (stream.getAudioTracks().length === 0) {
       stream.getTracks().forEach((t) => t.stop());
-      throw new Error('No audio came through. Pick a tab and tick "Also share tab audio".');
+      throw new Error('No sound came through. Pick a tab and tick “Also share tab audio”.');
     }
     this.disconnectSource();
     this.stream = stream;
@@ -1649,94 +1667,114 @@ class SoundStage {
 
   /* ----------------------------------------------------------------- venue */
 
+  /**
+   * Build a venue and swap it in. The new room is rendered and level-matched
+   * while the old one keeps playing; the swap itself is a 25 ms dip. If a
+   * newer request arrives meanwhile, this one is dropped rather than landing
+   * late on top of it.
+   */
   async loadVenue(venue, opts = {}) {
     await this.start();
+    const seq = ++this.loadSeq;
+
     const { buffers, report } = await renderVenue(venue, { ...opts, sampleRate: this.ctx.sampleRate });
-    this.convL.buffer = buffers[0];
-    this.convR.buffer = buffers[1];
-    this.venue = venue;
-    this.sys = SYSTEMS[venue.system];
-    this.render = report;
+    if (seq !== this.loadSeq) return null;
+
+    const sys = SYSTEMS[venue.system];
     // Capped: you can put six decibels back, not the thirteen the air took,
     // and a real rig would run out of headroom long before that too.
-    this.airCompDb = venue.airComp
+    const airCompDb = venue.airComp
       ? Math.min(6, AIR_ABSORPTION_DB_M[6] * report.distance * 0.75)
       : 0;
-    this.rebuildVoicing();
-    await this.calibrate();
-    return report;
-  }
 
-  rebuildVoicing() {
-    if (!this.sys) return;
-    if (this.voicing) { try { this.voicing.input.disconnect(); this.voicing.output.disconnect(); } catch (_) {} }
-    try { this.voicingIn.disconnect(); } catch (_) {}
-    this.voicing = makeVoicing(this.ctx, this.sys, this.airCompDb);
-    this.voicingIn.connect(this.voicing.input);
-    this.voicing.output.connect(this.stereoise);
+    const trim = await this.calibrate(sys, airCompDb, buffers) * dbToGain(venue.trimDb || 0);
+    if (seq !== this.loadSeq) return null;
+
+    const ctx = this.ctx;
+    const voicing = makeVoicing(ctx, sys, airCompDb);
+    const room = makeRoom(ctx, buffers);
+    voicing.output.connect(room.input);
+
+    // Fade, swap, fade back — one short dip instead of a click.
+    const now = ctx.currentTime;
+    this.wetGain.gain.cancelScheduledValues(now);
+    this.wetGain.gain.setValueAtTime(this.wetGain.gain.value, now);
+    this.wetGain.gain.linearRampToValueAtTime(0, now + SWAP_FADE);
+    await sleep(SWAP_FADE * 1000 + 10);
+    if (seq !== this.loadSeq) return null;
+
+    if (this.voicing) {
+      try { this.voicingIn.disconnect(this.voicing.input); } catch (_) {}
+      try { this.room.output.disconnect(this.roomTrim); } catch (_) {}
+    }
+    this.voicingIn.connect(voicing.input);
+    room.output.connect(this.roomTrim);
+    this.roomTrim.gain.setValueAtTime(trim, ctx.currentTime);
+    this.voicing = voicing;
+    this.room = room;
+
+    const t = ctx.currentTime;
+    this.wetGain.gain.cancelScheduledValues(t);
+    this.wetGain.gain.setValueAtTime(0, t);
+    this.wetGain.gain.linearRampToValueAtTime(this.bypassed ? 0 : 1, t + SWAP_FADE);
+
+    this.venue = venue;
+    this.sys = sys;
+    this.airCompDb = airCompDb;
+    this.render = { ...report, trim };
+    return this.render;
   }
 
   /**
-   * Set the treated path to the same loudness as the bypassed one, by playing
-   * pink noise through an exact copy of the chain and measuring both with a
-   * broadcast loudness filter.
+   * Find the gain that makes the treated path as loud as the bypassed one, by
+   * playing pink noise through an exact copy of the chain and measuring both
+   * with a broadcast loudness filter.
    *
-   * This is measured rather than calculated because the honest answer depends
-   * on the spectrum of the material: a room with a long bass decay adds far
-   * more to a bass-heavy record than a flat energy sum would suggest.
+   * Measured rather than calculated because the honest answer depends on the
+   * spectrum of the material: a room with a long bass decay adds far more to a
+   * bass-heavy record than a flat energy sum would suggest.
    */
-  async calibrate() {
-    if (!this.convL.buffer || !this.sys) return;
+  async calibrate(sys, airCompDb, buffers) {
     const sr = this.ctx.sampleRate;
     const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-    if (!OfflineCtx) return;
+    if (!OfflineCtx) return 1;
 
-    const irSec = Math.min(this.convL.buffer.length / sr, 6);
-    const noiseSec = irSec + 1.5;
-    const totalSec = noiseSec + Math.min(irSec, 2);
-    const len = Math.ceil(totalSec * sr);
-    const pink = pinkStereo(Math.ceil(noiseSec * sr));
+    const NOISE_SEC = 3;
+    const len = Math.ceil(NOISE_SEC * sr);
+    if (!this.noise || this.noise.rate !== sr) {
+      this.noise = { rate: sr, data: pinkStereo(len) };
+      this.dryLevel = 0;
+    }
+
+    // The reverberant field is within 0.1 dB of steady state a third of the way
+    // into the decay, so there is no need to wait for the whole response.
+    const irSec = buffers[0].length / sr;
+    const settle = Math.min(irSec / 3, 2);
 
     const measure = async (treated) => {
       const ctx = new OfflineCtx(2, len, sr);
-      const buf = ctx.createBuffer(2, pink[0].length, sr);
-      buf.copyToChannel(pink[0], 0);
-      buf.copyToChannel(pink[1], 1);
+      const buf = ctx.createBuffer(2, len, sr);
+      buf.copyToChannel(this.noise.data[0], 0);
+      buf.copyToChannel(this.noise.data[1], 1);
       const src = ctx.createBufferSource();
       src.buffer = buf;
-
       let tail = src;
       if (treated) {
-        const v = makeVoicing(ctx, this.sys, this.airCompDb);
+        const v = makeVoicing(ctx, sys, airCompDb);
+        const r = makeRoom(ctx, buffers);
         src.connect(v.input);
-        const st = ctx.createGain();
-        st.channelCount = 2;
-        st.channelCountMode = 'explicit';
-        st.channelInterpretation = 'speakers';
-        v.output.connect(st);
-        const sp = ctx.createChannelSplitter(2);
-        st.connect(sp);
-        const cl = ctx.createConvolver(); cl.normalize = false; cl.buffer = this.convL.buffer;
-        const cr = ctx.createConvolver(); cr.normalize = false; cr.buffer = this.convR.buffer;
-        sp.connect(cl, 0);
-        sp.connect(cr, 1);
-        const sum = ctx.createGain();
-        cl.connect(sum); cr.connect(sum);
-        tail = sum;
+        v.output.connect(r.input);
+        tail = r.output;
       }
       attachLoudnessMeter(ctx, tail).connect(ctx.destination);
       src.start(0);
-      // Measure only once the room has filled: before that the reverberant
-      // field is still building and the level would read low.
-      return rmsWindow(await ctx.startRendering(), irSec, noiseSec);
+      return rmsWindow(await ctx.startRendering(), treated ? settle : 0.1, NOISE_SEC);
     };
 
-    const [wet, dry] = await Promise.all([measure(true), measure(false)]);
-    const g = wet > 1e-9 ? dry / wet : 1;
-    const trim = clamp(g, 0.02, 64) * dbToGain(this.venue?.trimDb || 0);
-    this.roomTrim.gain.setTargetAtTime(trim, this.ctx.currentTime, RAMP);
-    if (this.render) this.render.trim = trim;
-    return trim;
+    // The bypass level never changes for a given sample rate; measure it once.
+    if (!this.dryLevel) this.dryLevel = await measure(false);
+    const wet = await measure(true);
+    return clamp(wet > 1e-9 ? this.dryLevel / wet : 1, 0.02, 64);
   }
 
   /* -------------------------------------------------------------- controls */
@@ -1756,12 +1794,25 @@ class SoundStage {
 
   outputLevel() {
     if (!this.analyser) return 0;
-    const buf = new Float32Array(this.analyser.fftSize);
+    const buf = this.meterBuf;
     this.analyser.getFloatTimeDomainData(buf);
     let sum = 0;
     for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
     return Math.sqrt(sum / buf.length);
   }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function decodeError(file, el) {
+  const name = (file.name || '').toLowerCase();
+  const safari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  if (safari && /\.(ogg|oga|opus|webm)$/.test(name)) {
+    return new Error('Safari can’t play that format. Try an MP3, M4A, WAV or FLAC.');
+  }
+  const code = el.error?.code;
+  if (code === 4) return new Error('That file isn’t a format this browser can play. MP3, M4A, WAV and FLAC all work.');
+  return new Error('That file couldn’t be read. Try another one.');
 }
 
 /* ------------------------------------------------------------ room renders */
@@ -1788,12 +1839,10 @@ async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {}) {
   const distances = venue.speakers.map((p) => Math.hypot(p[0] - listener[0], p[1] - listener[1], p[2] - listener[2]));
   const leadTrim = Math.min(...distances) / C_AIR;
 
-  const reports = [];
-  for (let i = 0; i < venue.speakers.length; i++) {
-    const pos = venue.speakers[i];
+  const reports = await Promise.all(venue.speakers.map((pos, i) => {
     const toListener = [listener[0] - pos[0], listener[1] - pos[1], listener[2] - pos[2]];
     const n = Math.hypot(toListener[0], toListener[1], toListener[2]) || 1;
-    reports.push(await renderSpeakerBRIR({
+    return renderSpeakerBRIR({
       dims: venue.dims,
       materials: venue.materials,
       listener,
@@ -1809,8 +1858,8 @@ async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {}) {
       irSeconds,
       leadTrim,
       seed: 0x5eed + i * 7717 + venue.id.length * 131,
-    }));
-  }
+    });
+  }));
 
   const buffers = reports.map((r) => r.buffer);
   const out = {
@@ -1825,11 +1874,7 @@ async function renderVenue(venue, { quality = 1, sampleRate = 48000 } = {}) {
       order: reports[0].order,
       irSeconds,
       sampleRate,
-      distance: Math.hypot(
-        listener[0] - venue.speakers[0][0],
-        listener[1] - venue.speakers[0][1],
-        listener[2] - venue.speakers[0][2],
-      ),
+      distance: distances[0],
       buildMs: Math.round(now() - started),
       decay: decayCurve(buffers[0]),
     },
@@ -1870,9 +1915,8 @@ function decayCurve(buffer, points = 400) {
  * app.js — interface wiring.
  *
  * Everything the page shows about a room is measured from the response the app
- * has just built: the decay curve is that impulse response, the band chart is
- * its Eyring decay times, the arrival time is the real flight time from the
- * loudspeaker to the seat. Nothing here is illustrative.
+ * has just built: the decay curve is that impulse response, the reverb time is
+ * its Eyring decay. Nothing here is illustrative.
  */
 
 
@@ -1890,6 +1934,8 @@ const state = {
   report: null,
   playing: false,
 };
+
+const isTouch = window.matchMedia('(pointer: coarse)').matches;
 
 /* ------------------------------------------------------------------ toast */
 
@@ -1909,6 +1955,8 @@ function midDecay(v) {
   return (rt[2] + rt[3]) / 2;
 }
 
+const fmtSeconds = (t) => (t < 1 ? t.toFixed(2) : t.toFixed(1));
+
 function buildVenueTiles() {
   const host = $('venues');
   host.innerHTML = '';
@@ -1918,10 +1966,15 @@ function buildVenueTiles() {
     b.className = 'venue';
     b.setAttribute('aria-pressed', String(v.id === state.venue.id));
     b.dataset.id = v.id;
-    const rt = midDecay(v);
-    b.innerHTML = `<h3>${v.name}</h3><span class="rt">${rt < 1 ? rt.toFixed(2) : rt.toFixed(1)} s decay</span>`;
+    b.innerHTML = `<h3>${v.name}</h3><span class="rt">${fmtSeconds(midDecay(v))} s reverb</span>`;
     b.addEventListener('click', () => selectVenue(v.id));
     host.appendChild(b);
+  }
+}
+
+function setTileBusy(id, busy) {
+  for (const el of document.querySelectorAll('.venue')) {
+    el.classList.toggle('building', busy && el.dataset.id === id);
   }
 }
 
@@ -1932,29 +1985,30 @@ let pending = null;
 
 async function refreshRoom() {
   const token = ++renderToken;
+  const venue = state.venue;
   $('plot').classList.add('busy');
-  const sampleRate = stage.ctx ? stage.ctx.sampleRate : 48000;
+  setTileBusy(venue.id, true);
 
   try {
     const opts = { quality: state.quality };
-    let report;
-    if (stage.ready) {
-      report = await stage.loadVenue(state.venue, opts);
-    } else {
-      report = (await renderVenue(state.venue, { ...opts, sampleRate })).report;
-    }
-    if (token !== renderToken) return;
+    const report = stage.ready
+      ? await stage.loadVenue(venue, opts)
+      : (await renderVenue(venue, { ...opts, sampleRate: 48000 })).report;
+    if (token !== renderToken || !report) return;
     state.report = report;
     paintRoom(report);
   } catch (err) {
     console.error(err);
-    say('The room could not be built on this device.');
+    say('That room couldn’t be built on this device.');
   } finally {
-    if (token === renderToken) $('plot').classList.remove('busy');
+    if (token === renderToken) {
+      $('plot').classList.remove('busy');
+      setTileBusy(venue.id, false);
+    }
   }
 }
 
-function scheduleRefresh(delay = 180) {
+function scheduleRefresh(delay = 0) {
   clearTimeout(pending);
   pending = setTimeout(refreshRoom, delay);
 }
@@ -1981,15 +2035,15 @@ function paintVenueText() {
 
 function paintRoom(report) {
   const rtMid = (report.rt60[2] + report.rt60[3]) / 2;
-  $('r-rt').innerHTML = `${rtMid < 1 ? rtMid.toFixed(2) : rtMid.toFixed(1)}<small> s</small>`;
+  $('r-rt').innerHTML = `${fmtSeconds(rtMid)}<small> s</small>`;
 
   // One thing worth knowing about every room, taken from its own numbers:
   // low frequencies almost always outlast high ones, and by how much is most
   // of what separates a warm room from a bright one.
   const ratio = report.rt60[0] / Math.max(report.rt60[6], 0.01);
   $('lesson').innerHTML = ratio >= 1.2
-    ? `Low notes hang on <b>${ratio.toFixed(1)}×</b> longer here than the top end.`
-    : 'The decay is even right across the spectrum here.';
+    ? `Bass notes linger <b>${ratio.toFixed(1)}×</b> longer than treble in here.`
+    : 'Bass and treble fade at about the same rate in here.';
 
   drawDecay(report);
 }
@@ -2027,7 +2081,6 @@ function drawDecay(report) {
   const direct = css('--direct') || '#4fc8d9';
   const tail = css('--tail') || '#e4703a';
 
-  // grid
   cx.strokeStyle = line;
   cx.lineWidth = 1;
   cx.font = "9px 'IBM Plex Mono', monospace";
@@ -2039,7 +2092,6 @@ function drawDecay(report) {
     cx.fillText(`${d}`, padL - 5, yy + 3);
   }
 
-  // time ticks
   cx.textAlign = 'center';
   const step = seconds > 3 ? 1 : seconds > 1.2 ? 0.5 : seconds > 0.5 ? 0.2 : 0.1;
   for (let t = step; t < seconds; t += step) {
@@ -2122,11 +2174,12 @@ function setBypass(on) {
   state.bypass = on;
   stage.setBypass(on);
   ab.dataset.on = String(on);
-  ab.textContent = on ? 'Raw file — no room' : 'Hold to hear it dry';
+  ab.textContent = on ? 'Original — no room' : 'Hold to hear the original';
 }
 ab.addEventListener('pointerdown', (e) => { e.preventDefault(); setBypass(true); });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) =>
   ab.addEventListener(ev, () => setBypass(false)));
+ab.addEventListener('contextmenu', (e) => e.preventDefault());
 ab.addEventListener('keydown', (e) => {
   if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setBypass(true); }
 });
@@ -2142,38 +2195,62 @@ async function afterSourceReady(kind, name) {
   $('now-kind').textContent = kind;
   $('now-name').textContent = name;
   $('transport').style.display = stage.mediaEl ? '' : 'none';
+  $('pick-file').textContent = 'Choose a different song';
+  $('pick-file').classList.remove('primary');
   stage.setVolume(state.volume);
   stage.setBypass(state.bypass);
   await refreshRoom();
   meterLoop();
 }
 
-$('pick-file').addEventListener('click', () => $('file-input').click());
-
-$('file-input').addEventListener('change', async (e) => {
-  const file = e.target.files?.[0];
+async function loadFile(file) {
   if (!file) return;
   try {
-    say('Reading the file…', 1500);
+    say('Opening the song…', 1500);
     const el = await stage.useFile(file);
+    $('now-name').textContent = file.name.replace(/\.[^.]+$/, '');
     wireTransport(el);
-    await afterSourceReady('File', file.name);
+    await afterSourceReady('Song', $('now-name').textContent);
+    await tryPlay(el);
+  } catch (err) {
+    console.warn(err.message);
+    say(err.message || 'That song couldn’t be played.');
+  }
+}
+
+/** Autoplay rules differ by browser; if play is refused, the play button is right there. */
+async function tryPlay(el) {
+  try {
+    await stage.start();
     await el.play();
     setPlaying(true);
   } catch (err) {
-    console.error(err);
-    say(err.message || 'That file could not be played.');
+    setPlaying(false);
+    if (err?.name === 'NotAllowedError') say('Tap play to start.');
+    else throw err;
   }
+}
+
+// Waking the audio engine on the button tap — a guaranteed user gesture —
+// rather than on the file picker's change event, which some browsers do not
+// count as one.
+$('pick-file').addEventListener('click', () => {
+  stage.start().catch(() => {});
+  $('file-input').click();
+});
+$('file-input').addEventListener('change', (e) => {
+  loadFile(e.target.files?.[0]);
+  e.target.value = '';
 });
 
 $('pick-capture').addEventListener('click', async () => {
   try {
     await stage.useSystemAudio();
-    await afterSourceReady('Captured', 'Shared tab or screen');
-    say('Anything that tab plays now goes through the room.');
+    await afterSourceReady('Browser tab', 'Whatever that tab is playing');
+    say('That tab now plays through the room.');
   } catch (err) {
     console.error(err);
-    if (err.name !== 'NotAllowedError') say(err.message || 'Capture is not available here.');
+    if (err.name !== 'NotAllowedError') say(err.message || 'Couldn’t capture that tab.');
   }
 });
 
@@ -2181,11 +2258,25 @@ $('pick-mic').addEventListener('click', async () => {
   try {
     await stage.useMicrophone();
     await afterSourceReady('Live', 'Microphone or line input');
-    say('Live input is running. Keep the volume sensible.');
+    say('Live input is on. Keep the volume sensible.');
   } catch (err) {
     console.error(err);
-    if (err.name !== 'NotAllowedError') say('No input device was available.');
+    if (err.name !== 'NotAllowedError') say('No input device was found.');
   }
+});
+
+// Drag a file anywhere on the page.
+let dragDepth = 0;
+document.addEventListener('dragenter', (e) => { e.preventDefault(); dragDepth++; document.body.classList.add('dropping'); });
+document.addEventListener('dragover', (e) => { e.preventDefault(); });
+document.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dropping'); } });
+document.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  document.body.classList.remove('dropping');
+  const file = [...(e.dataTransfer?.files || [])].find((f) => f.type.startsWith('audio/') || /\.(mp3|m4a|aac|wav|flac|ogg|opus|aiff?)$/i.test(f.name));
+  if (file) { stage.start().catch(() => {}); loadFile(file); }
+  else say('Drop a song file — MP3, M4A, WAV or FLAC.');
 });
 
 /* ------------------------------------------------------------- transport */
@@ -2197,6 +2288,7 @@ function setPlaying(on) {
   state.playing = on;
   $('play-icon').firstElementChild?.setAttribute('d', on ? PAUSE_PATH : PLAY_PATH);
   $('play').setAttribute('aria-label', on ? 'Pause' : 'Play');
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = on ? 'playing' : 'paused';
   if (on) meterLoop();
 }
 
@@ -2209,10 +2301,11 @@ function fmt(t) {
 let scrubbing = false;
 
 function wireTransport(el) {
-  $('play').onclick = async () => {
-    if (el.paused) { await stage.start(); await el.play(); setPlaying(true); }
+  const toggle = async () => {
+    if (el.paused) await tryPlay(el);
     else { el.pause(); setPlaying(false); }
   };
+  $('play').onclick = toggle;
   el.addEventListener('timeupdate', () => {
     if (scrubbing || !el.duration) return;
     $('scrub').value = String(Math.round((el.currentTime / el.duration) * 1000));
@@ -2221,12 +2314,44 @@ function wireTransport(el) {
   el.addEventListener('ended', () => setPlaying(false));
   el.addEventListener('pause', () => setPlaying(false));
   el.addEventListener('play', () => setPlaying(true));
-  $('scrub').oninput = () => { scrubbing = true; };
+  $('scrub').oninput = (e) => {
+    scrubbing = true;
+    if (el.duration) $('time').textContent = `${fmt((Number(e.target.value) / 1000) * el.duration)} / ${fmt(el.duration)}`;
+  };
   $('scrub').onchange = (e) => {
     scrubbing = false;
     if (el.duration) el.currentTime = (Number(e.target.value) / 1000) * el.duration;
   };
+
+  // Lock-screen and headphone-button controls, and a hint to the phone that
+  // this is music rather than a sound effect.
+  if ('mediaSession' in navigator) {
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: $('now-name').textContent || 'Sound Stage',
+        artist: `Sound Stage · ${state.venue.name}`,
+      });
+      navigator.mediaSession.setActionHandler('play', () => tryPlay(el));
+      navigator.mediaSession.setActionHandler('pause', () => { el.pause(); setPlaying(false); });
+      navigator.mediaSession.setActionHandler('seekbackward', () => { el.currentTime = Math.max(0, el.currentTime - 10); });
+      navigator.mediaSession.setActionHandler('seekforward', () => { el.currentTime = Math.min(el.duration || 0, el.currentTime + 10); });
+    } catch (_) {}
+  }
+
+  document.onkeydown = (e) => {
+    if (e.key !== ' ' || e.target.closest('button, input, textarea, summary')) return;
+    e.preventDefault();
+    toggle();
+  };
 }
+
+// Coming back from another app or a locked screen, the audio engine may have
+// been put to sleep underneath a media element that thinks it is still playing.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && stage.ctx && stage.mediaEl && !stage.mediaEl.paused) {
+    stage.start().catch(() => {});
+  }
+});
 
 /* ---------------------------------------------------------------- metering */
 
@@ -2250,6 +2375,12 @@ function meterLoop() {
 /* -------------------------------------------------------------------- boot */
 
 function boot() {
+  // Only offer what this device can actually do.
+  if (!navigator.mediaDevices?.getDisplayMedia) $('pick-capture').hidden = true;
+  // A phone's microphone through headphones is not a use anyone wants, and on
+  // Bluetooth it drops the whole headset into low-quality call mode.
+  if (isTouch || !navigator.mediaDevices?.getUserMedia) $('pick-mic').hidden = true;
+
   buildVenueTiles();
   paintVenueText();
   $('transport').style.display = 'none';

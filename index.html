@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sound Stage</title>
-<meta name="description" content="Hear a track as if it were playing through a system in a church, a stadium or a good living room — physically modelled, on headphones.">
+<meta name="description" content="Hear any song as if it were playing in a real room — a stone church, a stadium, a good living room — on your headphones.">
 <meta name="theme-color" content="#0b0f12">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,21 +19,21 @@
 
   <header>
     <h1 class="wordmark">Sound<span>&nbsp;Stage</span></h1>
-    <p class="tagline">Play a track through a loudspeaker system, in a room, and listen to it on headphones.</p>
+    <p class="tagline">Hear any song as if it were playing in a real room. Headphones on.</p>
   </header>
 
   <section id="source">
-    <div class="sec-head"><span class="step mono">01</span><p class="eyebrow">Source</p></div>
+    <div class="sec-head"><span class="step mono">01</span><p class="eyebrow">Your music</p></div>
     <div class="btn-row">
-      <button class="btn primary" id="pick-file">Choose an audio file</button>
-      <button class="btn" id="pick-capture">Capture tab audio</button>
-      <button class="btn" id="pick-mic">Live input</button>
+      <button class="btn primary" id="pick-file">Choose a song</button>
+      <button class="btn" id="pick-capture">Use a browser tab</button>
+      <button class="btn" id="pick-mic">Use the microphone</button>
     </div>
-    <input type="file" id="file-input" accept="audio/*" hidden>
+    <input type="file" id="file-input" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aif,.aiff" hidden>
 
     <div class="now" id="now" hidden>
       <div class="now-title">
-        <span class="eyebrow" id="now-kind">File</span>
+        <span class="eyebrow" id="now-kind">Song</span>
         <strong id="now-name">—</strong>
       </div>
       <div class="transport" id="transport">
@@ -46,14 +46,14 @@
     </div>
 
     <p class="hint" id="source-hint">
-      No app on a phone can reach inside Spotify or Apple Music, so play a file here.
-      On a computer you can share a browser tab instead.
+      Spotify and Apple Music don’t let other apps hear their audio, so pick a song file from your phone or
+      computer. MP3, M4A, WAV and FLAC all work.
     </p>
   </section>
 
   <section id="venue-section">
-    <div class="sec-head"><span class="step mono">02</span><p class="eyebrow">Room</p></div>
-    <div class="venues" id="venues" role="group" aria-label="Choose a room"></div>
+    <div class="sec-head"><span class="step mono">02</span><p class="eyebrow">Pick a room</p></div>
+    <div class="venues" id="venues" role="group" aria-label="Pick a room"></div>
   </section>
 
   <section id="room">
@@ -68,23 +68,23 @@
 
     <div class="plot" id="plot">
       <canvas id="decay" width="1200" height="320" role="img"
-              aria-label="How the sound in this room dies away over time"></canvas>
+              aria-label="How sound fades away in this room"></canvas>
       <div class="plot-legend">
-        <span><i style="background:var(--direct)"></i>Early reflections</span>
-        <span><i style="background:var(--tail)"></i>Reverberant tail</span>
+        <span><i style="background:var(--direct)"></i>Direct sound &amp; first echoes</span>
+        <span><i style="background:var(--tail)"></i>Reverb tail</span>
       </div>
     </div>
 
     <dl class="readouts">
-      <div class="readout"><dt>Decay</dt><dd id="r-rt">0.34<small> s</small></dd></div>
-      <div class="readout"><dt>System</dt><dd class="name" id="r-sys">Well-placed hi-fi pair</dd></div>
+      <div class="readout"><dt>Reverb</dt><dd id="r-rt">0.30<small> s</small></dd></div>
+      <div class="readout"><dt>Speakers</dt><dd class="name" id="r-sys">Good hi-fi speakers</dd></div>
     </dl>
 
-    <p class="lesson" id="lesson">Low notes hang on 1.8× longer than the top.</p>
+    <p class="lesson" id="lesson">Bass notes linger 1.9× longer than treble in here.</p>
   </section>
 
   <section id="controls-section">
-    <div class="sec-head"><span class="step mono">03</span><p class="eyebrow">Output</p></div>
+    <div class="sec-head"><span class="step mono">03</span><p class="eyebrow">Listen</p></div>
     <div class="controls">
       <div class="ctl">
         <div class="ctl-top"><label for="vol">Volume</label><span class="val mono" id="vol-val">85 %</span></div>
@@ -94,50 +94,38 @@
     </div>
 
     <details class="notes">
-      <summary>What this is actually doing, and why Spotify can't be piped through it</summary>
-      <p><strong>The model.</strong> Each room is a real shoebox in metres with real surface materials. The app traces
-        the direct sound and every early reflection off those surfaces with an image-source model, in seven octave
-        bands, then continues the decay with a diffuse tail whose reverberation time comes out of the Eyring equation
-        for that room. Each reflection is placed at both of your ears separately, with the timing and the
-        frequency-dependent shadowing a head of that size would cause. That is what makes the room appear outside your
-        head rather than between your ears. The loudspeaker voicing is applied <em>before</em> the room, in the order
-        reality does it.</p>
-      <p><strong>The source.</strong> Nothing running on a phone can read the audio coming out of another app.
-        On iOS there is no system-audio capture at all, and the streaming services encrypt their playback on every
-        platform. So this app has to be the player. Files work everywhere; on a desktop browser you can also share a
-        tab and process whatever it is playing, as long as that tab is not using DRM.</p>
-      <p><strong>Every room is the best version of itself.</strong> Not an average stadium with a rung-out PA — a
-        properly flown array that a system engineer has actually tuned, in a room with the treatment a good example
-        of it would have. The distant rigs even get the high end shelved back up to replace what ninety metres of
-        air takes out, which is exactly what someone does at front of house. What stays honest is the physics: the
-        size, the distance, the decay. A stadium is still a stadium.</p>
-      <p><strong>Where you stand is part of the room.</strong> There is an obvious place to be in each of these
-        rooms — the sweet spot in a control room, the middle of the bowl in a stadium — so the app puts you there
-        rather than asking. How hard each system is driven is set the same way: a club rig is wide open, a pair of
-        studio monitors is not.</p>
-      <p><strong>One thing is deliberately not real.</strong> Sound takes two tenths of a second to cross a stadium,
-        and the model knows it — but nobody wants to wait through that every time they press play, so the flight
-        time is trimmed off the front. The far smaller gap <em>between</em> the two speakers is kept, because that
-        is what places the stereo image.</p>
-      <p><strong>If it stutters.</strong>
-        <span class="seg" role="group" aria-label="Response length" id="quality">
-          <button type="button" data-q="0.55" aria-pressed="false">Light</button>
+      <summary>How it works, and why it can’t use Spotify</summary>
+      <p><strong>Every room is real.</strong> Each one has real measurements — how big it is, what the walls are
+        made of, where the speakers hang and where you’re standing. The app works out how sound bounces around
+        that space and how it reaches each of your ears a fraction differently. That difference is what makes
+        it feel like you’re <em>in</em> the room rather than listening to an effect.</p>
+      <p><strong>Every room is the best version of itself.</strong> Not an average stadium with a tired PA — a
+        properly tuned system in a room that’s been looked after. The size, the distance and the reverb are all
+        honest. The gear is as good as it gets.</p>
+      <p><strong>You’re always in the best spot.</strong> The sweet spot in a studio, the middle of the crowd
+        in a stadium. Nothing to fiddle with.</p>
+      <p><strong>One small cheat.</strong> Sound takes a fifth of a second to cross a stadium. We skip that wait
+        so the music starts the moment you press play.</p>
+      <p><strong>Why not Spotify?</strong> Spotify and Apple Music lock their audio so no other app can touch it.
+        That’s true on every phone, so this app has to play the music itself. On a computer you can also
+        share a browser tab, as long as it isn’t a locked-down player.</p>
+      <p><strong>If it stutters:</strong>
+        <span class="seg" role="group" aria-label="Reverb length" id="quality">
+          <button type="button" data-q="0.55" aria-pressed="false">Shorter</button>
           <button type="button" data-q="1" aria-pressed="true">Full</button>
         </span>
-        Full length uses the whole measured decay. Light halves it, which builds a room about twice as fast on a
-        slower phone.</p>
-      <p><strong>Headphones, please.</strong> The whole point is that you supply the ears. Played on speakers you
-        would be listening to a room inside a room.</p>
+        Shorter trims the reverb tail and is easier on older phones.</p>
+      <p><strong>Use headphones.</strong> On speakers you’d be hearing a room inside a room.</p>
     </details>
   </section>
 </div>
 
 <div class="ab-bar">
   <div class="ab-inner">
-    <button class="ab" id="ab" data-on="false" disabled>Hold to hear it dry</button>
+    <button class="ab" id="ab" data-on="false" disabled>Hold to hear the original</button>
     <div class="meter" aria-hidden="true">
       <div class="meter-track"><div class="meter-fill" id="meter"></div></div>
-      <span>OUT</span>
+      <span>LEVEL</span>
     </div>
   </div>
 </div>

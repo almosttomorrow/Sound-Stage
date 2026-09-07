@@ -249,6 +249,12 @@ section { padding: 22px 0; border-bottom: 1px solid var(--line-soft); }
   font-variant-numeric: tabular-nums;
 }
 .venue[aria-pressed="true"] .rt { color: var(--tail); }
+.venue.building .rt { color: var(--direct); }
+.venue.building .rt::after { content: ' · building…'; }
+.venue.building { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { border-left-color: var(--direct-dim); } }
+
+body.dropping .wrap { outline: 2px dashed var(--direct); outline-offset: -8px; }
 
 /* ------------------------------------------------------------------ room */
 
